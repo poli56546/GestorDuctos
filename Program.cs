@@ -15,10 +15,12 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddDefaultIdentity<IdentityUser>(options =>
     {
         options.SignIn.RequireConfirmedAccount = false;
-        options.Password.RequireDigit = true;
-        options.Password.RequiredLength = 6;
-        options.Password.RequireNonAlphanumeric = false;
-        options.Password.RequireUppercase = false;
+        options.Password.RequiredLength = 6;            // Solo exige 6 caracteres
+        options.Password.RequireDigit = false;          // No exige números obligatorios
+        options.Password.RequireNonAlphanumeric = false;// No exige símbolos especiales (*, #, @)
+        options.Password.RequireUppercase = false;      // No exige mayúsculas
+        options.Password.RequireLowercase = false;      // No exige minúsculas
+        options.Password.RequiredUniqueChars = 0;       // Permite repetir el mismo carácter
     })
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
