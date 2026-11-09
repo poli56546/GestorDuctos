@@ -6,34 +6,35 @@ using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configuración de la conexión a SQLite
+// Configuración de la conexión a PostgreSQL / SQLite
 var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL") 
                        ?? builder.Configuration.GetConnectionString("DefaultConnection");
 
-// 2. Configurar el DbContext para usar PostgreSQL en lugar de SQLite
+// 2. Configurar el DbContext para usar PostgreSQL
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-// 3. Habilitar ASP.NET Core Identity con soporte para Roles (SE MANTIENE INTEGRO)
-// ... tu código anterior
+// 3. Habilitar ASP.NET Core Identity con soporte para Roles
 builder.Services.AddDefaultIdentity<IdentityUser>(options =>
     {
         options.SignIn.RequireConfirmedAccount = false;
-        options.Password.RequiredLength = 6;            // Solo exige 6 caracteres
-        options.Password.RequireDigit = false;          // No exige números obligatorios
-        options.Password.RequireNonAlphanumeric = false;// No exige símbolos especiales (*, #, @)
-        options.Password.RequireUppercase = false;      // No exige mayúsculas
-        options.Password.RequireLowercase = false;      // No exige minúsculas
-        options.Password.RequiredUniqueChars = 0;       // Permite repetir el mismo carácter
+        options.Password.RequiredLength = 6;            
+        options.Password.RequireDigit = false;          
+        options.Password.RequireNonAlphanumeric = false;
+        options.Password.RequireUppercase = false;      
+        options.Password.RequireLowercase = false;      
+        options.Password.RequiredUniqueChars = 0;       
     })
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
-    builder.Services.ConfigureApplicationCookie(options =>
+
+builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/login";
     options.AccessDeniedPath = "/login";
     options.LogoutPath = "/api/auth/logout";
 });
+
 // Registrar servicios de negocio del sistema de ductos
 builder.Services.AddScoped<OficioService>();
 builder.Services.AddScoped<PlanoService>();
@@ -41,7 +42,6 @@ builder.Services.AddSingleton<AuditoriaService>();
 builder.Services.AddScoped<ProcedimientoService>();
 builder.Services.AddScoped<IProcedimientosService, ProcedimientoService>();
 builder.Services.AddScoped<ProyectoService>();
-
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -51,14 +51,13 @@ builder.Services.AddAntiforgery();
 
 var app = builder.Build();
 
-// Crear automáticamente el rol de Administrador y asegurar el usuario y contraseña por defecto al iniciar
+// Crear automáticamente el rol de Administrador, asegurar el usuario y ejecutar migraciones al iniciar
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
-        // Esto aplica las migraciones y crea las tablas si no existen
         context.Database.Migrate(); 
 
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
@@ -138,20 +137,5 @@ app.MapPost("/api/auth/logout", async (HttpContext context, SignInManager<Identi
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
-
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    try
-    {
-        var context = services.GetRequiredService<ApplicationDbContext>();
-        context.Database.Migrate();
-    }
-    catch (Exception ex)
-    {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Ocurrió un error al aplicar las migraciones.");
-    }
-}
 
 app.Run();
