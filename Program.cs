@@ -28,6 +28,12 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options =>
     })
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
+    builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/login";
+    options.AccessDeniedPath = "/login";
+    options.LogoutPath = "/api/auth/logout";
+});
 // Registrar servicios de negocio del sistema de ductos
 builder.Services.AddScoped<OficioService>();
 builder.Services.AddScoped<PlanoService>();
