@@ -1,20 +1,34 @@
 ﻿@inject NavigationManager NavigationManager
+
 <CascadingAuthenticationState>
-<Router AppAssembly="@typeof(Program).Assembly">
-    <Found Context="routeData">
-        <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(Layout.MainLayout)">
-            <NotAuthorized>
-                @{
-                    NavigationManager.NavigateTo("/login", true);
-                }
-            </NotAuthorized>
-        </AuthorizeRouteView>
-    </Found>
-    <NotFound>
-        <PageTitle>No encontrado</PageTitle>
-        <LayoutView Layout="@typeof(Layout.MainLayout)">
-            <p role="alert">Lo sentimos, no hay nada en esta dirección.</p>
-        </LayoutView>
-    </NotFound>
-</Router>
+    <Router AppAssembly="@typeof(Program).Assembly">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(Layout.MainLayout)">
+                <NotAuthorized>
+                    @if (context.User.Identity?.IsAuthenticated != true)
+                    {
+                        NavigationManager.NavigateTo("/login", true);
+                    }
+                    else
+                    {
+                        <div class="container text-center py-5">
+                            <h3 class="text-danger">Acceso Denegado</h3>
+                            <p class="text-muted">No tienes los permisos necesarios para ver esta página.</p>
+                        </div>
+                    }
+                </NotAuthorized>
+            </AuthorizeRouteView>
+            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        </Found>
+        <NotFound>
+            <PageTitle>No encontrado</PageTitle>
+            <LayoutView Layout="@typeof(Layout.MainLayout)">
+                <div class="container text-center py-5">
+                    <h3 class="text-danger">Página no encontrada</h3>
+                    <p class="text-muted">La ruta que buscas no existe en GestorDuctos.</p>
+                    <a href="" class="btn btn-primary mt-3">Volver al Inicio</a>
+                </div>
+            </LayoutView>
+        </NotFound>
+    </Router>
 </CascadingAuthenticationState>
