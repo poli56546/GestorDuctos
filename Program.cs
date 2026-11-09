@@ -7,11 +7,14 @@ using Microsoft.AspNetCore.Identity;
 var builder = WebApplication.CreateBuilder(args);
 
 // Configuración de la conexión a SQLite
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=gestorductos.db";
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(connectionString));
+var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL") 
+                       ?? builder.Configuration.GetConnectionString("DefaultConnection");
 
-// Habilitar ASP.NET Core Identity con soporte para Roles (Sin DefaultUI)
+// 2. Configurar el DbContext para usar PostgreSQL en lugar de SQLite
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseNpgsql(connectionString));
+
+// 3. Habilitar ASP.NET Core Identity con soporte para Roles (SE MANTIENE INTEGRO)
 builder.Services.AddDefaultIdentity<IdentityUser>(options =>
     {
         options.SignIn.RequireConfirmedAccount = false;
@@ -48,7 +51,8 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
-        context.Database.Migrate();
+        // Esto aplica las migraciones y crea las tablas si no existen
+        context.Database.Migrate(); 
 
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
         var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
@@ -75,22 +79,11 @@ using (var scope = app.Services.CreateScope())
                 await userManager.AddToRoleAsync(nuevoAdmin, "Administrador");
             }
         }
-        else
-        {
-            string nuevaPassword = "Admin123*";
-            var token = await userManager.GeneratePasswordResetTokenAsync(adminUser);
-            await userManager.ResetPasswordAsync(adminUser, token, nuevaPassword);
-
-            if (!await userManager.IsInRoleAsync(adminUser, "Administrador"))
-            {
-                await userManager.AddToRoleAsync(adminUser, "Administrador");
-            }
-        }
     }
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Ocurrió un error al inicializar los roles y usuarios predeterminados.");
+        logger.LogError(ex, "Ocurrió un error al inicializar la base de datos.");
     }
 }
 
