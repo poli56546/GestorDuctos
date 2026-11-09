@@ -1,0 +1,30 @@
+﻿@inherits LayoutComponentBase
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <!-- Barra superior oscura con el usuario activo en lugar de "About" -->
+        <div class="top-row px-4 top-bar-dark shadow-sm">
+            <AuthorizeView>
+                <Authorized>
+                    <div class="d-flex align-items-center">
+                        <div class="bg-primary bg-opacity-10 p-2 rounded-circle me-2">
+                            <i class="bi bi-person-fill text-primary"></i>
+                        </div>
+                        <span class="text-light fw-semibold small">@context.User.Identity?.Name</span>
+                    </div>
+                </Authorized>
+                <NotAuthorized>
+                    <span class="text-muted small"><i class="bi bi-shield-lock me-1"></i> Sin iniciar sesión</span>
+                </NotAuthorized>
+            </AuthorizeView>
+        </div>
+
+        <article class="content px-4 py-3">
+            @Body
+        </article>
+    </main>
+</div>

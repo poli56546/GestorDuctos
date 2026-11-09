@@ -1,0 +1,66 @@
+@page "/planos/{Id:int}"
+@rendermode InteractiveServer
+@using GestorDuctos.Models
+@using GestorDuctos.Services
+@inject PlanoService PlanoService
+
+<CascadingAuthenticationState>
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2>Historial y Detalles del Plano</h2>
+                <p class="text-muted mb-0">Control de versiones As-Built</p>
+            </div>
+            <a href="/planos" class="btn btn-outline-secondary">⬅ Volver al listado</a>
+        </div>
+
+        @if (plano == null)
+        {
+            <p class="text-center py-4 text-muted"><em>Cargando información del plano...</em></p>
+        }
+        else
+        {
+            <div class="card bg-dark shadow-sm border-secondary border-opacity-25">
+                <div class="card-header border-bottom border-secondary border-opacity-25 py-3">
+                    <h5 class="card-title text-white mb-0">Información General</h5>
+                </div>
+                <div class="card-body text-light">
+                    <div class="mb-3">
+                        <small class="text-muted text-uppercase fw-bold" style="letter-spacing: 1px;">Código del Plano</small>
+                        <p class="fs-5 mb-0">
+                            <span class="badge bg-secondary border border-light text-light px-3 py-2" style="letter-spacing: 1px;">
+                                @plano.CodigoPlano
+                            </span>
+                        </p>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted text-uppercase fw-bold" style="letter-spacing: 1px;">Nombre</small>
+                        <p class="mb-0">@plano.Nombre</p>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <small class="text-muted text-uppercase fw-bold" style="letter-spacing: 1px;">Disciplina</small>
+                            <p class="mb-0">@plano.Disciplina</p>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted text-uppercase fw-bold" style="letter-spacing: 1px;">Versión Actual</small>
+                            <p class="mb-0"><span class="badge bg-dark">@plano.Version</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</CascadingAuthenticationState>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Plano? plano;
+
+    protected override async Task OnInitializedAsync()
+    {
+        plano = await PlanoService.ObtenerPlanoPorIdAsync(Id);
+    }
+}

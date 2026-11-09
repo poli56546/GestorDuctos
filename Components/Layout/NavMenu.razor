@@ -1,0 +1,83 @@
+﻿<div class="top-row ps-3 navbar navbar-dark border-bottom border-secondary border-opacity-25">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold d-flex align-items-center" href="">
+            <i class="bi bi-layers-fill text-primary me-2 fs-4"></i>
+            <span>Gestor<span class="text-primary opacity-75">Ductos</span></span>
+        </a>
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
+    <nav class="flex-column mt-3">
+        
+        <div class="nav-item px-3 mb-2">
+            <NavLink class="nav-link custom-nav-link rounded-3" href="" Match="NavLinkMatch.All">
+                <i class="bi bi-grid-1x2-fill me-3 fs-5 opacity-75"></i> Dashboard
+            </NavLink>
+        </div>
+
+        <div class="px-4 mt-4 mb-2 text-uppercase fw-bold text-muted" style="font-size: 0.7rem; letter-spacing: 1px;">
+            Módulos Operativos
+        </div>
+
+        <div class="nav-item px-3 mb-1">
+            <NavLink class="nav-link custom-nav-link rounded-3" href="proyectos">
+                <i class="bi bi-folder-fill me-3 fs-5 opacity-75"></i> Proyectos
+            </NavLink>
+        </div>
+        <div class="nav-item px-3 mb-1">
+            <NavLink class="nav-link custom-nav-link rounded-3" href="planos">
+                <i class="bi bi-rulers me-3 fs-5 opacity-75"></i> Planos As-Built
+            </NavLink>
+        </div>
+        <div class="nav-item px-3 mb-1">
+            <NavLink class="nav-link custom-nav-link rounded-3" href="oficios">
+                <i class="bi bi-envelope-paper-fill me-3 fs-5 opacity-75"></i> Control de Oficios
+            </NavLink>
+        </div>
+        <div class="nav-item px-3 mb-1">
+            <NavLink class="nav-link custom-nav-link rounded-3" href="procedimientos">
+                <i class="bi bi-journal-bookmark-fill me-3 fs-5 opacity-75"></i> Procedimientos
+            </NavLink>
+        </div>
+
+        <div class="px-4 mt-4 mb-2 text-uppercase fw-bold text-muted" style="font-size: 0.7rem; letter-spacing: 1px;">
+            Sistema
+        </div>
+
+    <AuthorizeView>
+            <Authorized>
+                <div class="nav-item px-3">
+                    <!-- Formulario POST clásico (sin intercepción de Blazor) -->
+                    <form action="/api/auth/logout" method="post" data-enhance="false">
+                        <AntiforgeryToken />
+                        <button type="submit" class="nav-link custom-nav-link text-danger rounded-3 w-100 text-start" style="background: none; border: none;">
+                            Cerrar Sesión
+                        </button>
+                    </form>
+                </div>
+            </Authorized>
+            <NotAuthorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link custom-nav-link rounded-3" href="login">
+                        Iniciar Sesión
+                    </NavLink>
+                </div>
+            </NotAuthorized>
+        </AuthorizeView>
+    </nav>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}

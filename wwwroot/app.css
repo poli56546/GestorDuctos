@@ -1,0 +1,112 @@
+/* ==========================================
+   DISEÑO FORMAL OSCURO - GESTORDUCTOS
+========================================== */
+
+/* Fondo principal oscuro profundo y fuente limpia */
+body, .page, main, article, .content {
+    background-color: #12141c !important; /* Gris pizarroso muy oscuro */
+    color: #e2e8f0;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* Modificación de la barra lateral para que combine */
+.sidebar {
+    background-color: #0b0d14 !important; /* Casi negro para contraste */
+    border-right: 1px solid rgba(255,255,255,0.05);
+}
+
+/* Paneles generales (reemplaza al bg-white) */
+.panel-formal {
+    background-color: #1e212b !important;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Sobrescribir textos de Bootstrap para modo oscuro */
+.text-dark { color: #f8fafc !important; }
+.text-muted { color: #94a3b8 !important; }
+
+/* Tarjetas de Estadísticas (Efecto cristal oscuro) */
+.stat-card {
+    background: linear-gradient(145deg, #1e212b 0%, #171923 100%);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5) !important;
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Contenedores de los iconos para hacerlos sutiles */
+.icon-box {
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Botones de navegación rápida (Dark Mode) */
+.btn-formal {
+    background-color: #232736 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #cbd5e1 !important;
+    transition: all 0.2s ease;
+}
+.btn-formal:hover {
+    background-color: #2d3246 !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    color: #ffffff !important;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+/* Ajustes de insignias (badges) en oscuro */
+.badge-dark-primary { background-color: rgba(13, 110, 253, 0.15); color: #6ea8fe; }
+.badge-dark-success { background-color: rgba(25, 135, 84, 0.15); color: #75b798; }
+.badge-dark-info { background-color: rgba(13, 202, 240, 0.15); color: #6edff6; }
+.badge-dark-warning { background-color: rgba(255, 193, 7, 0.15); color: #ffda6a; }
+/* ==========================================
+   REDISEÑO DE BARRA SUPERIOR Y MENÚ LATERAL
+========================================== */
+
+/* 1. Barra superior (Elimina el fondo blanco) */
+.top-bar-dark {
+    background-color: #12141c !important; /* Mismo color del fondo principal */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    justify-content: flex-end; /* Alinea el perfil a la derecha */
+}
+
+/* 2. Menú Lateral (Elimina el degradado morado de Blazor) */
+.sidebar {
+    background-image: none !important; 
+    background-color: #0b0d14 !important; /* Oscuro profundo sólido */
+    border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+/* 3. Estilos modernos para los botones del menú */
+.custom-nav-link {
+    color: #94a3b8 !important;
+    transition: all 0.2s ease-in-out;
+    padding: 0.65rem 1rem;
+    border-left: 3px solid transparent;
+}
+
+/* Efecto al pasar el mouse (Se ilumina y se mueve un poco) */
+.custom-nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.03) !important;
+    color: #f8fafc !important;
+    transform: translateX(4px); 
+}
+
+/* Efecto cuando la pestaña está activa (Seleccionada) */
+.custom-nav-link.active {
+    background-color: rgba(13, 110, 253, 0.1) !important;
+    color: #6ea8fe !important;
+    border-left: 3px solid #0d6efd;
+}
+
+/* Botón de cerrar sesión */
+.custom-nav-link.text-danger:hover {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+    color: #ff6b6b !important;
+    border-left: 3px solid #dc3545;
+}

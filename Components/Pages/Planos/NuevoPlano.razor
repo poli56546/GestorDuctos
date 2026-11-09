@@ -1,0 +1,163 @@
+@page "/planos/nuevo"
+@rendermode InteractiveServer
+@using GestorDuctos.Models
+@using GestorDuctos.Services
+@inject PlanoService PlanoService
+@inject NavigationManager NavigationManager
+@inject IWebHostEnvironment WebHostEnvironment
+
+<CascadingAuthenticationState>
+    <div class="container-fluid py-4 px-lg-4" style="max-width: 800px;">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="p-4 panel-formal rounded-4 border-start border-success border-5" style="background-color: rgba(255,255,255,0.02);">
+                    <h2 class="fw-bold mb-1 text-white">Registrar / Nueva Versión de Plano</h2>
+                    <p class="text-muted mb-0">Control de Ingeniería Básica, Anexos y Trazabilidad As-Built con soporte documental.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card panel-formal rounded-4 border-0 shadow-lg" style="background-color: rgba(20, 24, 33, 0.7); backdrop-filter: blur(10px);">
+            <div class="card-body p-4 p-md-5">
+                
+                @if (!string.IsNullOrEmpty(mensajeError))
+                {
+                    <div class="alert alert-danger rounded-3 small mb-4">
+                        <strong>Atención:</strong> @mensajeError
+                    </div>
+                }
+
+                <div>
+                    <div class="mb-4">
+                        <label class="form-label text-light fw-semibold small text-uppercase" style="letter-spacing: 1px;">Código / Identificador</label>
+                        <input type="text" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2" 
+                               @bind="nuevoPlano.CodigoPlano"
+                               placeholder="Ej. PL-MEC-001" />
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label text-light fw-semibold small text-uppercase" style="letter-spacing: 1px;">Nombre del Plano *</label>
+                        <input type="text" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2" 
+                               @bind="nuevoPlano.Nombre"
+                               placeholder="Ej. Trazado General de Línea" />
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label text-light fw-semibold small text-uppercase" style="letter-spacing: 1px;">Disciplina</label>
+                            <input type="text" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2" 
+                                   @bind="nuevoPlano.Disciplina"
+                                   placeholder="Ej. Civil, Mecánica, Instrumentación" />
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label text-light fw-semibold small text-uppercase" style="letter-spacing: 1px;">Versión</label>
+                            <input type="text" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2" 
+                                   @bind="nuevoPlano.Version"
+                                   placeholder="Ej. A, B, 01" />
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label text-light fw-semibold small text-uppercase" style="letter-spacing: 1px;">Autorización / Modificación</label>
+                        <input type="text" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2" 
+                               @bind="nuevoPlano.AutorizacionModificacion"
+                               placeholder="Detalles de ingeniería o cambios autorizados" />
+                    </div>
+
+                    <!-- CARGA DE ARCHIVO -->
+                    <div class="mb-4">
+                        <label class="form-label text-light fw-semibold small text-uppercase" style="letter-spacing: 1px;">Documento del Plano (PDF / Imagen)</label>
+                        <InputFile OnChange="ManejarSeleccionArchivo" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2" />
+                        @if (!string.IsNullOrEmpty(nombreArchivo))
+                        {
+                            <small class="text-success mt-2 d-block">✔ Archivo seleccionado: @nombreArchivo</small>
+                        }
+                    </div>
+
+                    <div class="d-flex gap-4 mb-4">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input bg-dark border-secondary" id="vigenteCheck" @bind="nuevoPlano.EsVigente" />
+                            <label class="form-check-label text-light small" for="vigenteCheck">Marcar como plano vigente</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input bg-dark border-secondary" id="asBuiltCheck" @bind="nuevoPlano.EsAsBuilt" />
+                            <label class="form-check-label text-light small" for="asBuiltCheck">Certificado como As-Built</label>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-5 pt-3 border-top border-secondary border-opacity-10">
+                        <a href="planos" class="btn btn-outline-secondary rounded-pill px-4">
+                            ⬅ Volver al Listado
+                        </a>
+                        <button type="button" @onclick="GuardarPlano" class="btn btn-success rounded-pill px-5 shadow-sm fw-semibold text-white">
+                            Guardar Plano y Archivo
+                        </button>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+</CascadingAuthenticationState>
+
+@code {
+    private Plano nuevoPlano = new();
+    private string? mensajeError;
+    private IBrowserFile? archivoSeleccionado;
+    private string? nombreArchivo;
+
+    private void ManejarSeleccionArchivo(InputFileChangeEventArgs e)
+    {
+        archivoSeleccionado = e.File;
+        nombreArchivo = archivoSeleccionado?.Name;
+    }
+
+    private async Task GuardarPlano()
+    {
+        try
+        {
+            mensajeError = null;
+
+            if (string.IsNullOrWhiteSpace(nuevoPlano.Nombre))
+            {
+                mensajeError = "El nombre del plano es obligatorio.";
+                return;
+            }
+
+            if (archivoSeleccionado != null)
+            {
+                string webRootPath = HostEnvironmentGetPath();
+                string uploadsFolder = Path.Combine(webRootPath, "uploads", "planos");
+
+                if (!Directory.Exists(uploadsFolder))
+                {
+                    Directory.CreateDirectory(uploadsFolder);
+                }
+
+                string uniqueFileName = $"{Guid.NewGuid()}_{archivoSeleccionado.Name}";
+                string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await archivoSeleccionado.OpenReadStream(maxAllowedSize: 30 * 1024 * 1024).CopyToAsync(stream);
+                }
+
+                nuevoPlano.RutaArchivo = $"/uploads/planos/{uniqueFileName}";
+                nuevoPlano.FechaSubida = DateTime.Now;
+                nuevoPlano.TamanoBytes = archivoSeleccionado.Size;
+            }
+
+            await PlanoService.GuardarPlanoAsync(nuevoPlano);
+            NavigationManager.NavigateTo("planos");
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Ocurrió un error al guardar: {ex.Message}";
+        }
+    }
+
+    private string HostEnvironmentGetPath()
+    {
+        return WebHostEnvironment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+    }
+}

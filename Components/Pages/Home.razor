@@ -1,0 +1,202 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@using GestorDuctos.Services
+@using GestorDuctos.Models
+@inject ProyectoService ProyectoService
+@inject PlanoService PlanoService
+@inject OficioService OficioService
+@inject IProcedimientosService ProcedimientosService
+@inject AuditoriaService AuditoriaService
+@implements IDisposable
+
+<PageTitle>Panel de Control - GestorDuctos</PageTitle>
+
+<div class="container-fluid py-4 px-lg-4">
+    <!-- Encabezado del Dashboard -->
+    <div class="row mb-4 align-items-center">
+        <div class="col-12">
+            <div class="p-4 panel-formal rounded-4 border-start border-primary border-5">
+                <h2 class="fw-bold mb-1 text-white">Visión General del Sistema</h2>
+                <p class="text-muted mb-0">Métricas actuales y estado de control documental de ingeniería.</p>
+            </div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-warning mb-4 shadow-sm rounded-4" style="background-color: rgba(255, 193, 7, 0.1); border-color: rgba(255, 193, 7, 0.2); color: #ffda6a;" role="alert">
+            <span class="fw-bold">Aviso:</span> @errorMessage
+        </div>
+    }
+
+    <!-- Tarjetas de Estadísticas Dinámicas -->
+    <div class="row g-4 mb-5">
+        <!-- Tarjeta Proyectos -->
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card stat-card rounded-4 h-100 border-0 p-2">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <p class="text-muted text-uppercase fw-semibold mb-0" style="font-size: 0.8rem; letter-spacing: 1px;">Proyectos Activos</p>
+                        <span class="badge badge-dark-primary rounded-pill fw-normal border border-primary border-opacity-25">Módulo PRJ</span>
+                    </div>
+                    <h2 class="display-5 fw-bold text-white mb-3">@totalProyectos</h2>
+                    <div class="progress rounded-pill" style="height: 4px; background-color: rgba(255,255,255,0.05);">
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: 85%"></div>
+                    </div>
+                    <p class="text-muted small mt-2 mb-0">Capacidad operativa estable</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjeta Planos -->
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card stat-card rounded-4 h-100 border-0 p-2">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <p class="text-muted text-uppercase fw-semibold mb-0" style="font-size: 0.8rem; letter-spacing: 1px;">Planos Vigentes</p>
+                        <span class="badge badge-dark-success rounded-pill fw-normal border border-success border-opacity-25">Módulo PLN</span>
+                    </div>
+                    <h2 class="display-5 fw-bold text-white mb-3">@totalPlanos</h2>
+                    <div class="progress rounded-pill" style="height: 4px; background-color: rgba(255,255,255,0.05);">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: 60%"></div>
+                    </div>
+                    <p class="text-muted small mt-2 mb-0">Documentos bajo control</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjeta Oficios -->
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card stat-card rounded-4 h-100 border-0 p-2">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <p class="text-muted text-uppercase fw-semibold mb-0" style="font-size: 0.8rem; letter-spacing: 1px;">Oficios Registrados</p>
+                        <span class="badge badge-dark-info rounded-pill fw-normal border border-info border-opacity-25">Módulo OFC</span>
+                    </div>
+                    <h2 class="display-5 fw-bold text-white mb-3">@totalOficios</h2>
+                    <div class="progress rounded-pill" style="height: 4px; background-color: rgba(255,255,255,0.05);">
+                        <div class="progress-bar bg-info" role="progressbar" style="width: 45%"></div>
+                    </div>
+                    <p class="text-muted small mt-2 mb-0">Comunicaciones trazadas</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjeta Procedimientos (Dinámica) -->
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card stat-card rounded-4 h-100 border-0 p-2">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <p class="text-muted text-uppercase fw-semibold mb-0" style="font-size: 0.8rem; letter-spacing: 1px;">Procedimientos</p>
+                        <span class="badge badge-dark-warning rounded-pill fw-normal border border-warning border-opacity-25">SGC</span>
+                    </div>
+                    <h2 class="display-5 fw-bold text-white mb-3">@totalProcedimientos</h2>
+                    <div class="progress rounded-pill" style="height: 4px; background-color: rgba(255,255,255,0.05);">
+                        <div class="progress-bar bg-warning" role="progressbar" style="width: 10%"></div>
+                    </div>
+                    <p class="text-muted small mt-2 mb-0">Pendientes de revisión</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección: Últimos Movimientos en el Sistema (En Tiempo Real) -->
+    <div class="panel-formal rounded-4 p-4 mb-4">
+        <div class="d-flex align-items-center mb-4 border-bottom border-secondary border-opacity-25 pb-3">
+            <h5 class="fw-bold mb-0 text-white">Últimos Movimientos en el Sistema</h5>
+            <div class="ms-auto">
+                <span class="text-muted small">Historial de registros recientes (Tiempo Real)</span>
+            </div>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table table-dark table-hover table-borderless align-middle mb-0" style="background-color: transparent;">
+                <thead style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <tr>
+                        <th class="text-muted fw-normal text-uppercase pb-3" style="font-size: 0.75rem; letter-spacing: 1px;">Descripción del Registro</th>
+                        <th class="text-muted fw-normal text-uppercase pb-3" style="font-size: 0.75rem; letter-spacing: 1px;">Categoría</th>
+                        <th class="text-muted fw-normal text-uppercase pb-3" style="font-size: 0.75rem; letter-spacing: 1px;">Estado actual</th>
+                        <th class="text-muted fw-normal text-uppercase pb-3 text-end" style="font-size: 0.75rem; letter-spacing: 1px;">Fecha</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (ultimosMovimientos == null || !ultimosMovimientos.Any())
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-3">No hay movimientos recientes registrados.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var mov in ultimosMovimientos)
+                        {
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.02);">
+                                <td class="text-light fw-semibold py-3">@mov.Descripcion</td>
+                                <td><span class="@ObtenerClaseCategoria(mov.Categoria) small fw-bold text-uppercase">@mov.Categoria</span></td>
+                                <td><span class="badge badge-dark-success rounded-pill border border-success border-opacity-25">@mov.Estado</span></td>
+                                <td class="text-muted text-end small">@mov.FechaTexto</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@code {
+    private int totalProyectos = 0;
+    private int totalPlanos = 0;
+    private int totalOficios = 0;
+    private int totalProcedimientos = 0;
+    private string? errorMessage;
+    private IEnumerable<MovimientoDto> ultimosMovimientos = new List<MovimientoDto>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuditoriaService.OnMovimientoAgregado += ActualizarMovimientosEnVivo;
+        await CargarDatosDashboard();
+    }
+
+    private async Task CargarDatosDashboard()
+    {
+        try
+        {
+            var proyectos = await ProyectoService.ObtenerProyectosAsync();
+            totalProyectos = proyectos?.Count ?? 0;
+
+            var planos = await PlanoService.ObtenerPlanosAsync();
+            totalPlanos = planos?.Count ?? 0;
+
+            var oficios = await OficioService.ObtenerOficiosAsync();
+            totalOficios = oficios?.Count ?? 0;
+
+            totalProcedimientos = await ProcedimientosService.ContarTotalAsync();
+
+            ultimosMovimientos = AuditoriaService.ObtenerUltimosMovimientos();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"No se pudieron cargar algunas estadísticas: {ex.Message}";
+        }
+    }
+
+    private async void ActualizarMovimientosEnVivo()
+    {
+        ultimosMovimientos = AuditoriaService.ObtenerUltimosMovimientos();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private string ObtenerClaseCategoria(string categoria) => categoria?.ToUpper() switch
+    {
+        "PROYECTO" => "text-primary",
+        "PLANO" => "text-success",
+        "OFICIO" => "text-info",
+        _ => "text-secondary"
+    };
+
+    public void Dispose()
+    {
+        AuditoriaService.OnMovimientoAgregado -= ActualizarMovimientosEnVivo;
+    }
+}

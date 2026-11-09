@@ -1,0 +1,261 @@
+@page "/oficios/detalle/{Id}"
+@page "/oficios/{Id}"
+@rendermode InteractiveServer
+@using GestorDuctos.Models
+@using GestorDuctos.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@inject OficioService OficioService
+@inject NavigationManager NavigationManager
+
+<CascadingAuthenticationState>
+    <div class="container-fluid py-4 px-lg-4">
+        <!-- Encabezado y botón de regreso -->
+        <div class="row mb-4 align-items-center">
+            <div class="col-12 col-md-8">
+                <div class="p-4 panel-formal rounded-4 border-start border-info border-5"
+                     style="background-color: rgba(255,255,255,0.02);">
+                    <h2 class="fw-bold mb-1 text-white">Detalles del Oficio</h2>
+                    <p class="text-muted mb-0">Seguimiento, trazabilidad y respuestas del documento oficial.</p>
+                </div>
+            </div>
+            <div class="col-12 col-md-4 text-md-end mt-3 mt-md-0">
+                <a href="/oficios" class="btn btn-outline-secondary rounded-pill px-4">⬅ Volver al listado</a>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(errorMensaje))
+        {
+            <div class="alert alert-danger rounded-3 p-3 mb-4">
+                <strong>Atención:</strong> @errorMensaje
+            </div>
+        }
+
+        @if (oficio == null && string.IsNullOrEmpty(errorMensaje))
+        {
+            <div class="text-center py-5">
+                <div class="spinner-border text-info" role="status"></div>
+                <p class="text-muted mt-2">Cargando información del oficio...</p>
+            </div>
+        }
+        else if (oficio != null)
+        {
+            <div class="row g-4">
+                <!-- Columna Izquierda: Datos del Oficio -->
+                <div class="col-lg-5">
+                    <div class="card panel-formal rounded-4 border-0 shadow-lg h-100"
+                         style="background-color: rgba(20, 24, 33, 0.7); backdrop-filter: blur(10px);">
+                        <div class="card-header border-bottom border-secondary border-opacity-10 py-3 bg-transparent">
+                            <h5 class="card-title text-white mb-0 fw-bold">Información General</h5>
+                        </div>
+                        <div class="card-body text-light p-4">
+                            <!-- Folio -->
+                            <div class="mb-3">
+                                <small class="text-muted text-uppercase fw-semibold" style="letter-spacing: 1px; font-size: 0.75rem;">Folio</small>
+                                <p class="fs-5 mb-0 mt-1">
+                                    <strong class="badge badge-dark-info rounded-pill border border-info border-opacity-25 px-3 py-2 fw-semibold"
+                                            style="letter-spacing: 1px; font-family: monospace; font-size: 0.9rem;">
+                                        @oficio.Folio
+                                    </strong>
+                                </p>
+                            </div>
+
+                            <!-- Oficio de solicitud No. -->
+                            <div class="mb-3">
+                                <small class="text-muted text-uppercase fw-semibold" style="letter-spacing: 1px; font-size: 0.75rem;">Oficio de solicitud No.</small>
+                                <p class="mb-0 mt-1 text-light fw-bold">@(string.IsNullOrEmpty(oficio.OficioSolicitudNo) ? "N/A" : oficio.OficioSolicitudNo)</p>
+                            </div>
+
+                            <!-- Tipo de Oficio -->
+                            <div class="mb-3">
+                                <small class="text-muted text-uppercase fw-semibold" style="letter-spacing: 1px; font-size: 0.75rem;">Tipo de Oficio</small>
+                                <p class="mb-0 mt-1 text-info fw-semibold">@(string.IsNullOrEmpty(oficio.TipoOficio) ? "General" : oficio.TipoOficio)</p>
+                            </div>
+
+                            <!-- Asunto -->
+                            <div class="mb-3">
+                                <small class="text-muted text-uppercase fw-semibold" style="letter-spacing: 1px; font-size: 0.75rem;">Asunto</small>
+                                <p class="mb-0 mt-1 text-light">@oficio.Asunto</p>
+                            </div>
+
+                            <!-- Dirigido o en atención -->
+                            <div class="mb-3">
+                                <small class="text-muted text-uppercase fw-semibold" style="letter-spacing: 1px; font-size: 0.75rem;">Dirigido o en Atención</small>
+                                <p class="mb-0 mt-1 text-light">@(string.IsNullOrEmpty(oficio.DirigidoAtencion) ? "N/A" : oficio.DirigidoAtencion)</p>
+                            </div>
+
+                            <!-- Remitente y Destinatario -->
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <small class="text-muted text-uppercase fw-semibold" style="letter-spacing: 1px; font-size: 0.75rem;">Remitente</small>
+                                    <p class="mb-0 mt-1 text-light">@oficio.Remitente</p>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted text-uppercase fw-semibold" style="letter-spacing: 1px; font-size: 0.75rem;">Destinatario</small>
+                                    <p class="mb-0 mt-1 text-light">@oficio.Destinatario</p>
+                                </div>
+                            </div>
+
+                            <!-- Fechas y Estado -->
+                            <div class="row mb-3">
+                                <div class="col-4">
+                                    <small class="text-muted text-uppercase fw-semibold" style="letter-spacing: 1px; font-size: 0.75rem;">Fecha Registro</small>
+                                    <p class="mb-0 mt-1 text-light">@oficio.Fecha.ToString("dd/MM/yyyy")</p>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-muted text-uppercase fw-semibold" style="letter-spacing: 1px; font-size: 0.75rem;">Fecha Solicitud</small>
+                                    <p class="mb-0 mt-1 text-light">@oficio.FechaSolicitud.ToString("dd/MM/yyyy")</p>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-muted text-uppercase fw-semibold" style="letter-spacing: 1px; font-size: 0.75rem;">Estado</small>
+                                    <p class="mb-0 mt-1">
+                                        <span class="badge rounded-pill @(oficio.Estado == "Cerrado" ? "bg-success bg-opacity-10 text-success border border-success border-opacity-25" : "bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25") px-3 py-1 fw-bold">
+                                            @oficio.Estado
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Documento Adjunto -->
+                            <div class="mt-4 pt-3 border-top border-secondary border-opacity-25">
+                                <small class="text-muted text-uppercase fw-semibold d-block mb-2" style="letter-spacing: 1px; font-size: 0.75rem;">Documento Adjunto</small>
+                                @if (!string.IsNullOrEmpty(oficio.RutaArchivo))
+                                {
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                                        <a href="@oficio.RutaArchivo" target="_blank" class="btn btn-sm btn-outline-info rounded-pill px-3">
+                                            <i class="bi bi-file-earmark-arrow-down me-1"></i> Ver / Descargar Documento
+                                        </a>
+                                        <small class="text-muted">Subido: @oficio.FechaSubida?.ToString("dd/MM/yyyy HH:mm")</small>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small fst-italic">No hay ningún archivo adjunto en este oficio.</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Columna Derecha: Hilo de Seguimiento -->
+                <div class="col-lg-7">
+                    <div class="card panel-formal rounded-4 border-0 shadow-lg h-100 d-flex flex-column"
+                         style="background-color: rgba(20, 24, 33, 0.7); backdrop-filter: blur(10px);">
+                        <div class="card-header border-bottom border-secondary border-opacity-10 py-3 bg-transparent">
+                            <h5 class="card-title text-white mb-0 fw-bold">Hilo de Seguimiento</h5>
+                        </div>
+
+                        <div class="card-body flex-grow-1 p-4" style="max-height: 450px; overflow-y: auto;">
+                            @if (oficio.Respuestas == null || !oficio.Respuestas.Any())
+                            {
+                                <div class="text-center py-5">
+                                    <p class="text-muted fst-italic mb-0">No hay respuestas registradas en este hilo.</p>
+                                </div>
+                            }
+                            else
+                            {
+                                @foreach (var resp in oficio.Respuestas.OrderBy(r => r.FechaRespuesta))
+                                {
+                                    <div class="border-start border-info ps-3 mb-4 ms-2">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <strong class="text-info">@resp.Autor</strong>
+                                            <small class="text-muted" style="font-size: 0.8rem;">@resp.FechaRespuesta.ToString("dd/MM/yyyy HH:mm")</small>
+                                        </div>
+                                        <p class="text-light mb-0" style="white-space: pre-wrap;">@resp.Comentario</p>
+                                    </div>
+                                }
+                            }
+                        </div>
+
+                        <div class="card-footer border-top border-secondary border-opacity-10 bg-transparent p-4">
+                            <div class="input-group">
+                                <textarea class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-start-4 px-3 py-2"
+                                          rows="2" placeholder="Escribe una respuesta o actualización para este oficio..."
+                                          @bind="nuevaRespuesta.Comentario"></textarea>
+                                <button type="button" @onclick="GuardarRespuesta"
+                                        class="btn btn-info px-4 rounded-end-4 fw-semibold text-dark">
+                                    <span>Enviar</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</CascadingAuthenticationState>
+
+@code {
+    [Parameter]
+    public string Id { get; set; } = string.Empty;
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthState { get; set; }
+
+    private Oficio? oficio;
+    private OficioRespuesta nuevaRespuesta = new();
+    private string usuarioActual = "Usuario del Sistema";
+    private string? errorMensaje;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatos();
+
+        try
+        {
+            if (AuthState != null)
+            {
+                var authState = await AuthState;
+                if (authState.User.Identity?.IsAuthenticated == true)
+                {
+                    usuarioActual = authState.User.Identity.Name ?? "Usuario";
+                }
+            }
+        }
+        catch (Exception)
+        {
+            usuarioActual = "Usuario del Sistema";
+        }
+    }
+
+    private async Task CargarDatos()
+    {
+        try
+        {
+            errorMensaje = null;
+            if (int.TryParse(Id, out int idNumerico))
+            {
+                oficio = await OficioService.ObtenerOficioPorIdAsync(idNumerico);
+            }
+            else
+            {
+                var lista = await OficioService.ObtenerOficiosAsync();
+                oficio = lista.FirstOrDefault(o => o.Folio == Id);
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMensaje = $"Error al obtener datos: {ex.Message}";
+        }
+    }
+
+    private async Task GuardarRespuesta()
+    {
+        if (string.IsNullOrWhiteSpace(nuevaRespuesta.Comentario) || oficio == null) return;
+
+        try
+        {
+            nuevaRespuesta.OficioId = oficio.Id;
+            nuevaRespuesta.Autor = usuarioActual;
+            nuevaRespuesta.FechaRespuesta = DateTime.Now;
+
+            await OficioService.AgregarRespuestaAsync(nuevaRespuesta);
+
+            nuevaRespuesta = new OficioRespuesta();
+            await CargarDatos();
+        }
+        catch (Exception ex)
+        {
+            errorMensaje = $"Error al enviar la respuesta: {ex.Message}";
+        }
+    }
+}

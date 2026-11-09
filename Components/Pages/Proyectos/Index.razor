@@ -1,0 +1,107 @@
+@page "/proyectos"
+@rendermode InteractiveServer
+@using GestorDuctos.Models
+@using GestorDuctos.Services
+@inject ProyectoService ProyectoService
+
+<div class="container-fluid py-4 px-lg-4">
+    <!-- Encabezado del Módulo -->
+    <div class="row mb-4 align-items-center">
+        <div class="col-12 col-md-8">
+            <div class="p-4 panel-formal rounded-4 border-start border-primary border-5" style="background-color: rgba(255,255,255,0.02);">
+                <h2 class="fw-bold mb-1 text-white">Listado Maestro de Proyectos</h2>
+                <p class="text-muted mb-0">Control general de obras, claves contractuales y gerencias de ductos.</p>
+            </div>
+        </div>
+        <div class="col-12 col-md-4 text-md-end mt-3 mt-md-0">
+            <AuthorizeView Roles="Administrador">
+                <Authorized>
+                    <a href="proyectos/nuevo" class="btn btn-primary rounded-pill px-4 shadow-sm fw-semibold">
+                        <i class="bi bi-plus-lg me-1"></i> Registrar Nuevo Proyecto
+                    </a>
+                </Authorized>
+                <NotAuthorized>
+                    <span class="text-muted small fst-italic">Modo lectura (Inicia sesión como Admin para registrar)</span>
+                </NotAuthorized>
+            </AuthorizeView>
+        </div>
+    </div>
+
+    <!-- Tabla de Proyectos Moderna -->
+    <div class="card panel-formal rounded-4 border-0 shadow-lg" style="background-color: rgba(20, 24, 33, 0.7); backdrop-filter: blur(10px);">
+        <div class="card-body p-0">
+            @if (proyectos == null)
+            {
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="text-muted mt-2">Cargando proyectos del sistema...</p>
+                </div>
+            }
+            else if (!proyectos.Any())
+            {
+                <div class="text-center py-5">
+                    <p class="text-muted fs-5 mb-1">No hay proyectos registrados en el sistema todavía.</p>
+                    <p class="text-muted small">Utiliza el botón superior para dar de alta el primer proyecto.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover table-borderless align-middle mb-0" style="background-color: transparent;">
+                        <thead style="border-bottom: 1px solid rgba(255,255,255,0.08); background-color: rgba(0,0,0,0.2);">
+                            <tr>
+                                <th class="text-muted fw-normal text-uppercase py-3 ps-4" style="font-size: 0.75rem; letter-spacing: 1px;">Clave Obra</th>
+                                <th class="text-muted fw-normal text-uppercase py-3" style="font-size: 0.75rem; letter-spacing: 1px;">Nombre del Proyecto</th>
+                                <th class="text-muted fw-normal text-uppercase py-3" style="font-size: 0.75rem; letter-spacing: 1px;">Contrato Cliente</th>
+                                <th class="text-muted fw-normal text-uppercase py-3" style="font-size: 0.75rem; letter-spacing: 1px;">Descripción</th>
+                                <th class="text-muted fw-normal text-uppercase py-3 text-end pe-4" style="font-size: 0.75rem; letter-spacing: 1px;">Fecha Registro</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in proyectos)
+                            {
+                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+                                    <td class="ps-4 py-3">
+                                        <span class="badge badge-dark-primary rounded-pill border border-primary border-opacity-25 px-3 py-2 fw-semibold">
+                                            @p.Clave
+                                        </span>
+                                    </td>
+                                    <td class="text-light fw-semibold">@p.Nombre</td>
+                                    <td>
+                                        @if (string.IsNullOrEmpty(p.ContratoCliente))
+                                        {
+                                            <span class="badge rounded-pill bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-2 py-1">
+                                                Sin asignar
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge rounded-pill bg-info bg-opacity-10 text-info border border-info border-opacity-25 px-3 py-1 fw-bold">
+                                                @p.ContratoCliente
+                                            </span>
+                                        }
+                                    </td>
+                                    <td class="text-muted small text-truncate" style="max-width: 250px;">
+                                        @(string.IsNullOrEmpty(p.Descripcion) ? "Sin descripción detallada" : p.Descripcion)
+                                    </td>
+                                    <td class="text-muted text-end pe-4 small">
+                                        @p.FechaCreacion.ToString("dd/MM/yyyy")
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<Proyecto>? proyectos;
+
+    protected override async Task OnInitializedAsync()
+    {
+        proyectos = await ProyectoService.ObtenerProyectosAsync();
+    }
+}

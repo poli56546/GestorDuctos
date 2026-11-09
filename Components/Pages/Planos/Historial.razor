@@ -1,0 +1,165 @@
+@page "/planos/historial/{Id:int}"
+@page "/planos/historial"
+@rendermode InteractiveServer
+@using GestorDuctos.Models
+@using GestorDuctos.Services
+@inject PlanoService PlanoService
+@inject NavigationManager NavigationManager
+
+<CascadingAuthenticationState>
+    <div class="container-fluid py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="text-white fw-bold">Historial de Versiones</h2>
+                <p class="text-muted mb-0">Trazabilidad completa para el plano seleccionado (ID: <strong
+                    class="text-info">@Id</strong>)</p>
+                </div>
+                <a href="/planos" class="btn btn-outline-secondary rounded-pill px-4">⬅ Volver al Listado</a>
+            </div>
+
+            @if (!string.IsNullOrEmpty(errorMensaje))
+            {
+                <div class="alert alert-danger rounded-3 p-3 mb-4">
+                    <strong>Atención:</strong> @errorMensaje
+                </div>
+            }
+
+            <div class="card panel-formal rounded-4 border-0 shadow-lg"
+                 style="background-color: rgba(20, 24, 33, 0.7); backdrop-filter: blur(10px);">
+                <div class="card-body p-4">
+                    @if (versiones == null && string.IsNullOrEmpty(errorMensaje))
+                    {
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-info" role="status"></div>
+                            <p class="text-muted mt-2">Cargando historial de versiones...</p>
+                        </div>
+                    }
+                    else if (versiones == null || !versiones.Any())
+                    {
+                        <div class="text-center py-5">
+                            <p class="text-muted fs-5">No se encontraron registros de historial para este plano.</p>
+                            <p class="small text-secondary">Verifica que el plano tenga un nombre o código válido registrado en
+                                el sistema.</p>
+                            </div>
+                        }
+                else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-dark table-hover align-middle mb-0" style="background: transparent;">
+                                    <thead>
+                                        <tr class="border-bottom border-secondary border-opacity-25">
+                                            <th class="text-uppercase small text-muted">Nombre del Plano</th>
+                                            <th class="text-uppercase small text-muted">Versión</th>
+                                            <th class="text-uppercase small text-muted">Disciplina</th>
+                                            <th class="text-uppercase small text-muted">Fecha de Subida</th>
+                                            <th class="text-uppercase small text-muted">Peso del Archivo</th>
+                                            <th class="text-uppercase small text-muted">Autorización / Modificación</th>
+                                            <th class="text-uppercase small text-muted">Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var v in versiones)
+                                        {
+                                            <tr>
+                                                <td><strong class="text-white">@v.Nombre</strong></td>
+                                                <td><span class="badge bg-dark border border-secondary px-2 py-1">@v.Version</span></td>
+                                                <td><span
+                                                    class="badge bg-secondary bg-opacity-25 text-info px-2 py-1">@v.Disciplina</span>
+                                                </td>
+                                                <td class="text-light small">
+                                                    @(v.FechaSubida.HasValue ? v.FechaSubida.Value.ToString("dd/MM/yyyy HH:mm") : "N/A")
+                                                </td>
+                                                <td class="text-muted small">
+                                                    @FormatearTamano(v.TamanoBytes)
+                                                </td>
+                                                <td class="text-light">@v.AutorizacionModificacion</td>
+                                                <td>
+                                                    @if (v.EsVigente)
+                                                    {
+                                                        <span
+                                                        class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-1">Vigente</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <!-- CAMBIADO DE Obsoleto / Histórico A Finalizado -->
+                                                        <span
+                                                        class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-3 py-1">Finalizado</span>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </CascadingAuthenticationState>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private List<Plano>? versiones;
+    private string? errorMensaje;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        errorMensaje = null;
+
+        if (Id <= 0)
+        {
+            versiones = new List<Plano>();
+            return;
+        }
+
+        try
+        {
+            var todosLosPlanos = await PlanoService.ObtenerPlanosAsync();
+
+            if (todosLosPlanos != null && todosLosPlanos.Any())
+            {
+                var planoSeleccionado = todosLosPlanos.FirstOrDefault(p => p.Id == Id);
+
+                if (planoSeleccionado != null)
+                {
+                    versiones = todosLosPlanos
+                        .Where(p => !string.IsNullOrEmpty(p.Nombre) && p.Nombre.Trim().Equals(planoSeleccionado.Nombre?.Trim(),
+StringComparison.OrdinalIgnoreCase))
+                        .OrderByDescending(p => p.Id)
+                        .ToList();
+                }
+                else
+                {
+                    versiones = new List<Plano>();
+                }
+            }
+            else
+            {
+                versiones = new List<Plano>();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMensaje = $"Error al cargar el historial: {ex.Message}";
+            versiones = new List<Plano>();
+        }
+    }
+
+    // Método para convertir bytes a formato legible (KB / MB)
+    private string FormatearTamano(long? bytes)
+    {
+        if (!bytes.HasValue || bytes.Value == 0) return "Sin archivo";
+
+        double len = bytes.Value;
+        string[] orden = { "B", "KB", "MB", "GB" };
+        int ordenTip = 0;
+        while (len >= 1024 && ordenTip < orden.Length - 1)
+        {
+            ordenTip++;
+            len = len / 1024;
+        }
+        return $"{len:0.##} {orden[ordenTip]}";
+    }
+}

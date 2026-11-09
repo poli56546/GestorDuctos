@@ -1,0 +1,101 @@
+@page "/oficios"
+@rendermode InteractiveServer
+@using GestorDuctos.Models
+@using GestorDuctos.Services
+@inject OficioService OficioService
+
+<div class="container-fluid py-4 px-lg-4">
+    <!-- Encabezado del Módulo -->
+    <div class="row mb-4 align-items-center">
+        <div class="col-12 col-md-8">
+            <div class="p-4 panel-formal rounded-4 border-start border-info border-5" style="background-color: rgba(255,255,255,0.02);">
+                <h2 class="fw-bold mb-1 text-white">Control de Oficios</h2>
+                <p class="text-muted mb-0">Gestión, seguimiento y trazabilidad de correspondencia técnica.</p>
+            </div>
+        </div>
+        <div class="col-12 col-md-4 text-md-end mt-3 mt-md-0">
+            <AuthorizeView Roles="Administrador">
+                <Authorized Context="authContext">
+                    <a href="oficios/nuevo" class="btn btn-info rounded-pill px-4 shadow-sm fw-semibold text-dark">
+                        <i class="bi bi-plus-lg me-1"></i> ➕ Registrar Oficio
+                    </a>
+                </Authorized>
+                <NotAuthorized>
+                    <span class="text-muted small fst-italic">Modo lectura (Inicia sesión como Administrador)</span>
+                </NotAuthorized>
+            </AuthorizeView>
+        </div>
+    </div>
+
+    <!-- Contenedor / Tarjeta Estilizada -->
+    <div class="card panel-formal rounded-4 border-0 shadow-lg" style="background-color: rgba(20, 24, 33, 0.7); backdrop-filter: blur(10px);">
+        <div class="card-body p-0">
+            @if (oficios == null)
+            {
+                <div class="text-center py-5">
+                    <div class="spinner-border text-info" role="status"></div>
+                    <p class="text-muted mt-2">Cargando oficios...</p>
+                </div>
+            }
+            else if (!oficios.Any())
+            {
+                <div class="text-center py-5">
+                    <p class="text-muted fs-5 mb-1">No hay oficios registrados todavía.</p>
+                    <p class="text-muted small">Utiliza el botón superior para dar de alta la primera correspondencia.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover table-borderless align-middle mb-0" style="background-color: transparent;">
+                        <thead style="border-bottom: 1px solid rgba(255,255,255,0.08); background-color: rgba(0,0,0,0.2);">
+                            <tr>
+                                <th class="text-muted fw-normal text-uppercase py-3 ps-4" style="font-size: 0.75rem; letter-spacing: 1px;">Folio</th>
+                                <th class="text-muted fw-normal text-uppercase py-3" style="font-size: 0.75rem; letter-spacing: 1px;">Fecha</th>
+                                <th class="text-muted fw-normal text-uppercase py-3" style="font-size: 0.75rem; letter-spacing: 1px;">Asunto</th>
+                                <th class="text-muted fw-normal text-uppercase py-3" style="font-size: 0.75rem; letter-spacing: 1px;">Remitente</th>
+                                <th class="text-muted fw-normal text-uppercase py-3" style="font-size: 0.75rem; letter-spacing: 1px;">Estado</th>
+                                <th class="text-muted fw-normal text-uppercase py-3 text-center pe-4" style="font-size: 0.75rem; letter-spacing: 1px;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var o in oficios.OrderByDescending(x => x.Fecha))
+                            {
+                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+                                    <td class="ps-4 py-3">
+                                        <span class="badge badge-dark-info rounded-pill border border-info border-opacity-25 px-3 py-2 fw-semibold" style="font-family: monospace;">
+                                            @o.Folio
+                                        </span>
+                                    </td>
+                                    <td class="text-muted small">@o.Fecha.ToString("dd/MM/yyyy")</td>
+                                    <td class="text-light fw-semibold">@o.Asunto</td>
+                                    <td class="text-muted small">@o.Remitente</td>
+                                    <td>
+                                        <span class="badge rounded-pill @(o.Estado == "Cerrado" ? "bg-success bg-opacity-10 text-success border border-success border-opacity-25" : "bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25") px-3 py-1 fw-bold">
+                                            @o.Estado
+                                        </span>
+                                    </td>
+                                    <td class="text-center pe-4">
+                                        <!-- Conecta exactamente con la pantalla de detalles e hilo de seguimiento -->
+                                        <a href="/oficios/@o.Id" class="btn btn-sm btn-outline-info px-3 py-1 fw-semibold rounded-pill">
+                                         Ver Seguimiento
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<Oficio>? oficios;
+
+    protected override async Task OnInitializedAsync()
+    {
+        oficios = await OficioService.ObtenerOficiosAsync();
+    }
+}

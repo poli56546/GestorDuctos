@@ -1,0 +1,80 @@
+@page "/procedimientos/nuevo"
+@rendermode InteractiveServer
+@using GestorDuctos.Models
+@using GestorDuctos.Services
+@inject IProcedimientosService ProcedimientosService
+@inject NavigationManager NavigationManager
+
+<CascadingAuthenticationState>
+    <div class="container-fluid py-4 px-lg-4" style="max-width: 800px;">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="p-4 panel-formal rounded-4 border-start border-warning border-5" style="background-color: rgba(255,255,255,0.02);">
+                    <h2 class="fw-bold mb-1 text-white">Registrar Nuevo Procedimiento (SGC)</h2>
+                    <p class="text-muted mb-0">Alta de manuales técnicos, guías operativas y normativas de calidad.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card panel-formal rounded-4 border-0 shadow-lg" style="background-color: rgba(20, 24, 33, 0.7); backdrop-filter: blur(10px);">
+            <div class="card-body p-4 p-md-5">
+                
+                <EditForm Model="nuevoProcedimiento" OnValidSubmit="GuardarProcedimiento" FormName="FormularioNuevoProcedimiento">
+                    <DataAnnotationsValidator />
+                    <AntiforgeryToken />
+
+                    <div class="mb-4">
+                        <label class="form-label text-light fw-semibold small text-uppercase" style="letter-spacing: 1px;">Título del Procedimiento</label>
+                        <InputText class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2" 
+                                   @bind-Value="nuevoProcedimiento.Titulo"
+                                   placeholder="Ej. Procedimiento de Soldadura en Línea" />
+                        <ValidationMessage For="() => nuevoProcedimiento.Titulo" class="text-danger small mt-1" />
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label text-light fw-semibold small text-uppercase" style="letter-spacing: 1px;">Área / Proceso</label>
+                            <InputText class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2" 
+                                       @bind-Value="nuevoProcedimiento.Area"
+                                       placeholder="Ej. Operaciones, Calidad, Seguridad" />
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label text-light fw-semibold small text-uppercase" style="letter-spacing: 1px;">Versión</label>
+                            <InputText class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2" 
+                                       @bind-Value="nuevoProcedimiento.Version"
+                                       placeholder="Ej. Rev. 01" />
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-5 pt-3 border-top border-secondary border-opacity-10">
+                        <a href="procedimientos" class="btn btn-outline-secondary rounded-pill px-4">
+                            ⬅ Volver al Listado
+                        </a>
+                        <button type="submit" class="btn btn-warning rounded-pill px-5 shadow-sm fw-semibold text-dark">
+                            Guardar Procedimiento
+                        </button>
+                    </div>
+                </EditForm>
+                
+            </div>
+        </div>
+    </div>
+</CascadingAuthenticationState>
+
+@code {
+    [SupplyParameterFromForm]
+    private Procedimiento nuevoProcedimiento { get; set; } = default!;
+
+    protected override void OnInitialized()
+    {
+        nuevoProcedimiento ??= new();
+    }
+
+    private async Task GuardarProcedimiento()
+    {
+        if (string.IsNullOrWhiteSpace(nuevoProcedimiento.Titulo)) return;
+
+        await ProcedimientosService.GuardarProcedimientoAsync(nuevoProcedimiento);
+        NavigationManager.NavigateTo("procedimientos");
+    }
+}

@@ -1,0 +1,14 @@
+# Compilación y archivos temporales
+[Bb]in/
+[Oo]bj/
+.vs/
+.vscode/
+*.user
+
+# Base de datos SQLite local
+*.db
+*.sqlite
+*.db-journal
+
+# Archivos subidos por los usuarios en desarrollo
+wwwroot/uploads/

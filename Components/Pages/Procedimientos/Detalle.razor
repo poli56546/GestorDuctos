@@ -1,0 +1,171 @@
+@page "/procedimientos/{Id:int}"
+@rendermode InteractiveServer
+@using GestorDuctos.Models
+@using GestorDuctos.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@inject IProcedimientosService ProcedimientosService
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthStateProvider
+
+<CascadingAuthenticationState>
+    <div class="container-fluid py-4 px-lg-4">
+        <!-- Encabezado y botón de regreso -->
+        <div class="row mb-4 align-items-center">
+            <div class="col-12 col-md-8">
+                <div class="p-4 panel-formal rounded-4 border-start border-warning border-5" style="background-color: rgba(255,255,255,0.02);">
+                    <h2 class="fw-bold mb-1 text-white">Historial y Versiones SGC</h2>
+                    <p class="text-muted mb-0">Trazabilidad, control de revisiones y bitácora de cambios del procedimiento.</p>
+                </div>
+            </div>
+            <div class="col-12 col-md-4 text-md-end mt-3 mt-md-0">
+                <a href="/procedimientos" class="btn btn-outline-secondary rounded-pill px-4">⬅ Volver al Listado</a>
+            </div>
+        </div>
+
+        @if (procedimiento == null)
+        {
+            <div class="text-center py-5">
+                <div class="spinner-border text-warning" role="status"></div>
+                <p class="text-muted mt-2">Cargando información del procedimiento...</p>
+            </div>
+        }
+        else
+        {
+            <div class="row g-4">
+                <!-- Columna Izquierda: Ficha Técnica del Procedimiento -->
+                <div class="col-lg-5">
+                    <div class="card panel-formal rounded-4 border-0 shadow-lg h-100" style="background-color: rgba(20, 24, 33, 0.7); backdrop-filter: blur(10px);">
+                        <div class="card-header border-bottom border-secondary border-opacity-10 py-3 bg-transparent">
+                            <h5 class="card-title text-white mb-0 fw-bold">Ficha Normativa</h5>
+                        </div>
+                        <div class="card-body text-light p-4">
+                            <div class="mb-3">
+                                <small class="text-muted text-uppercase fw-semibold" style="letter-spacing: 1px; font-size: 0.75rem;">Código SGC</small>
+                                <p class="fs-5 mb-0 mt-1">
+                                    <strong class="badge badge-dark-warning rounded-pill border border-warning border-opacity-25 px-3 py-2 fw-semibold" style="letter-spacing: 1px; font-family: monospace; font-size: 0.9rem;">
+                                        @procedimiento.Codigo
+                                    </strong>
+                                </p>
+                            </div>
+                            <div class="mb-3">
+                                <small class="text-muted text-uppercase fw-semibold" style="letter-spacing: 1px; font-size: 0.75rem;">Título del Procedimiento</small>
+                                <p class="mb-0 mt-1 text-light fw-semibold fs-5">@procedimiento.Titulo</p>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <small class="text-muted text-uppercase fw-semibold" style="letter-spacing: 1px; font-size: 0.75rem;">Área / Proceso</small>
+                                    <p class="mb-0 mt-1 text-light">
+                                        <span class="badge bg-secondary bg-opacity-25 text-light px-2 py-1">@procedimiento.Area</span>
+                                    </p>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted text-uppercase fw-semibold" style="letter-spacing: 1px; font-size: 0.75rem;">Versión Actual</small>
+                                    <p class="mb-0 mt-1">
+                                        <span class="badge rounded-pill bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-3 py-1 fw-bold">
+                                            @procedimiento.Version
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Columna Derecha: Bitácora de Cambios y Actualizaciones -->
+                <div class="col-lg-7">
+                    <div class="card panel-formal rounded-4 border-0 shadow-lg h-100 d-flex flex-column" style="background-color: rgba(20, 24, 33, 0.7); backdrop-filter: blur(10px);">
+                        <div class="card-header border-bottom border-secondary border-opacity-10 py-3 bg-transparent d-flex justify-content-between align-items-center">
+                            <h5 class="card-title text-white mb-0 fw-bold">Bitácora de Modificaciones</h5>
+                            <span class="badge bg-dark border border-secondary border-opacity-25 text-muted">Control SGC</span>
+                        </div>
+                        
+                        <!-- Lista de cambios / versiones con scroll -->
+                        <div class="card-body flex-grow-1 p-4" style="max-height: 400px; overflow-y: auto;">
+                            @if (historialCambios == null || !historialCambios.Any())
+                            {
+                                <div class="text-center py-4">
+                                    <p class="text-muted fst-italic mb-0">No hay registros previos de cambios en este procedimiento.</p>
+                                </div>
+                            }
+                            else
+                            {
+                                @foreach (var cambio in historialCambios.OrderByDescending(r => r.FechaRespuesta))
+                                {
+                                    <div class="border-start border-warning ps-3 mb-4 ms-2">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <strong class="text-warning">@cambio.Autor</strong>
+                                            <small class="text-muted" style="font-size: 0.8rem;">@cambio.FechaRespuesta.ToString("dd/MM/yyyy HH:mm")</small>
+                                        </div>
+                                        <p class="text-light mb-0" style="white-space: pre-wrap;">@cambio.Comentario</p>
+                                    </div>
+                                }
+                            }
+                        </div>
+
+                        <!-- Panel interactivo para registrar nueva nota o actualización de versión -->
+                        <div class="card-footer border-top border-secondary border-opacity-10 bg-transparent p-4">
+                            <div class="input-group">
+                                <textarea class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-start-4 px-3 py-2" 
+                                          rows="2" 
+                                          placeholder="Registrar nueva modificación, justificación de cambio o revisión..."
+                                          @bind="nuevoComentario"></textarea>
+                                <button type="button" @onclick="RegistrarCambio" class="btn btn-warning px-4 rounded-end-4 fw-semibold text-dark">
+                                    <span>Registrar Cambio</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</CascadingAuthenticationState>
+
+@code {
+    [Parameter] 
+    public int Id { get; set; }
+
+    private Procedimiento? procedimiento;
+    private List<OficioRespuesta> historialCambios = new();
+    private string nuevoComentario = string.Empty;
+    private string usuarioActual = "Auditor SGC";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatos();
+
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity is { IsAuthenticated: true })
+        {
+            usuarioActual = authState.User.Identity.Name ?? "Auditor";
+        }
+    }
+
+    private async Task CargarDatos()
+    {
+        procedimiento = await ProcedimientosService.ObtenerProcedimientoPorIdAsync(Id);
+        // Simulamos o cargamos el historial filtrado por este ID si tu base de datos lo soporta
+        // historialCambios = await ProcedimientosService.ObtenerHistorialAsync(Id);
+    }
+
+    private async Task RegistrarCambio()
+    {
+        if (string.IsNullOrWhiteSpace(nuevoComentario) || procedimiento == null) return;
+
+        var respuesta = new OficioRespuesta
+        {
+            OficioId = Id,
+            Autor = usuarioActual,
+            Comentario = nuevoComentario,
+            FechaRespuesta = DateTime.Now
+        };
+
+        await ProcedimientosService.AgregarRespuestaAsync(respuesta);
+        
+        // Añadimos localmente a la lista para visualización inmediata
+        historialCambios.Add(respuesta);
+
+        nuevoComentario = string.Empty;
+        StateHasChanged();
+    }
+}
