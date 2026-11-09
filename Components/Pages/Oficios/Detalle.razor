@@ -166,21 +166,30 @@
                             }
                         </div>
 
-                        <div class="card-footer border-top border-secondary border-opacity-10 bg-transparent p-4">
-                            <div class="input-group">
-                                <textarea class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-start-4 px-3 py-2"
-                                          rows="2" placeholder="Escribe una respuesta o actualización para este oficio..."
-                                          @bind="nuevaRespuesta.Comentario"></textarea>
-                                <button type="button" @onclick="GuardarRespuesta"
-                                        class="btn btn-info px-4 rounded-end-4 fw-semibold text-dark">
-                                    <span>Enviar</span>
-                                </button>
-                            </div>
+                       <!-- Panel interactivo (Solo visible para Administradores) -->
+                        <AuthorizeView Roles="Administrador">
+                            <Authorized>
+                                <div class="card-footer border-top border-secondary border-opacity-10 bg-transparent p-4">
+                                    <div class="input-group">
+                                        <textarea class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-start-4 px-3 py-2"
+                                                  rows="2" placeholder="Escribe una respuesta o actualización para este oficio..."
+                                                  @bind="nuevaRespuesta.Comentario"></textarea>
+                                        <button type="button" @onclick="GuardarRespuesta"
+                                                class="btn btn-info px-4 rounded-end-4 fw-semibold text-dark">
+                                            <span>Enviar</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </Authorized>
+                            <NotAuthorized>
+                                <div class="card-footer border-top border-secondary border-opacity-10 bg-transparent p-4 text-center">
+                                    <span class="text-muted small fst-italic">Modo lectura: Solo el administrador puede añadir actualizaciones al hilo de seguimiento.</span>
+                                </div>
+                            </NotAuthorized>
+                        </AuthorizeView>
                         </div>
                     </div>
-                </div>
-            </div>
-        }
+                </div>        }
     </div>
 </CascadingAuthenticationState>
 

@@ -12,7 +12,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(connectionString));
 
 // Habilitar ASP.NET Core Identity con soporte para Roles (Sin DefaultUI)
-builder.Services.AddDefaultIdentity<IdentityUser>(options => 
+builder.Services.AddDefaultIdentity<IdentityUser>(options =>
     {
         options.SignIn.RequireConfirmedAccount = false;
         options.Password.RequireDigit = true;
@@ -22,20 +22,19 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options =>
     })
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
-
 // Registrar servicios de negocio del sistema de ductos
 builder.Services.AddScoped<OficioService>();
 builder.Services.AddScoped<PlanoService>();
-builder.Services.AddScoped<ProcedimientoService>();
-builder.Services.AddScoped<IProcedimientosService, ProcedimientoService>(); // <-- Corrección aquí
-builder.Services.AddScoped<ProyectoService>();
 builder.Services.AddSingleton<AuditoriaService>();
 builder.Services.AddScoped<ProcedimientoService>();
 builder.Services.AddScoped<IProcedimientosService, ProcedimientoService>();
+builder.Services.AddScoped<ProyectoService>();
+
+
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
-    
+
 builder.Services.AddAntiforgery();
 
 var app = builder.Build();
@@ -59,7 +58,7 @@ using (var scope = app.Services.CreateScope())
 
         string adminEmail = "admin@gestorductos.com";
         var adminUser = await userManager.FindByEmailAsync(adminEmail);
-        
+
         if (adminUser == null)
         {
             var nuevoAdmin = new IdentityUser

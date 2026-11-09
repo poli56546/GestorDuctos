@@ -37,9 +37,7 @@
                         </div>
 
                         <div class="mb-4">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <label class="form-label text-light small fw-semibold text-uppercase" style="letter-spacing: 1px;">Contraseña</label>
-                            </div>
+                            <label class="form-label text-light small fw-semibold text-uppercase" style="letter-spacing: 1px;">Contraseña</label>
                             <InputText type="password" @bind-Value="Input.Password" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2" autocomplete="current-password" aria-required="true" placeholder="••••••••" />
                             <ValidationMessage For="() => Input.Password" class="text-danger small mt-1" />
                         </div>
@@ -55,6 +53,14 @@
                             Acceder al Sistema
                         </button>
                     </EditForm>
+
+                    <!-- Enlace de registro para nuevos trabajadores -->
+                    <div class="text-center mt-4 border-top border-secondary border-opacity-25 pt-4">
+                        <p class="mb-0 text-muted small">
+                            ¿Personal nuevo? <a href="registro" class="text-info text-decoration-none fw-bold">Crear cuenta de trabajador</a>
+                        </p>
+                    </div>
+
                 </div>
             </div>
 
@@ -74,16 +80,17 @@
     private HttpContext HttpContext { get; set; } = default!;
 
     [SupplyParameterFromForm]
-    private InputModel Input { get; set; } = new();
+    private InputModel Input { get; set; } // Quitamos el "= new()" para corregir el warning BL0008
 
     [SupplyParameterFromQuery]
     private string? ReturnUrl { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
+        Input ??= new(); // Lo inicializamos aquí dentro
+
         if (HttpMethods.IsGet(HttpContext.Request.Method))
         {
-            // Limpia la cookie de autenticación externa previa si existe
             await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
         }
     }

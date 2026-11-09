@@ -1,7 +1,9 @@
 @page "/proyectos/nuevo"
+@using GestorDuctos.Services
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Administrador")]
 @rendermode InteractiveServer
 @using GestorDuctos.Models
-@using GestorDuctos.Services
 @inject ProyectoService ProyectoService
 @inject NavigationManager NavigationManager
 

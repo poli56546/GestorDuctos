@@ -4,13 +4,15 @@
             <i class="bi bi-layers-fill text-primary me-2 fs-4"></i>
             <span>Gestor<span class="text-primary opacity-75">Ductos</span></span>
         </a>
-        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+        <!-- ATRIBUTOS DE BOOTSTRAP PARA ABRIR EL MENÚ -->
+        <button title="Navigation menu" class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuMovil" aria-controls="menuMovil" aria-expanded="false" aria-label="Navegación">
             <span class="navbar-toggler-icon"></span>
         </button>
     </div>
 </div>
 
-<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
+<!-- CONTENEDOR COLAPSABLE CON EL ID "menuMovil" -->
+<div class="collapse navbar-collapse nav-scrollable" id="menuMovil">
     <nav class="flex-column mt-3">
         
         <div class="nav-item px-3 mb-2">
@@ -48,13 +50,12 @@
             Sistema
         </div>
 
-    <AuthorizeView>
+        <AuthorizeView>
             <Authorized>
                 <div class="nav-item px-3">
-                    <!-- Formulario POST clásico (sin intercepción de Blazor) -->
                     <form action="/api/auth/logout" method="post" data-enhance="false">
                         <AntiforgeryToken />
-                        <button type="submit" class="nav-link custom-nav-link text-danger rounded-3 w-100 text-start" style="background: none; border: none;">
+                        <button type="submit" class="nav-link custom-nav-link text-danger rounded-3 w-100 text-start" style="background: none; border: none;" data-bs-toggle="collapse" data-bs-target="#menuMovil">
                             Cerrar Sesión
                         </button>
                     </form>
@@ -66,18 +67,13 @@
                         Iniciar Sesión
                     </NavLink>
                 </div>
+                <!-- NUEVO BOTÓN DE REGISTRO -->
+                <div class="nav-item px-3 mt-2">
+                    <NavLink class="nav-link custom-nav-link rounded-3 text-info" href="registro">
+                        Crear Cuenta (Trabajador)
+                    </NavLink>
+                </div>
             </NotAuthorized>
         </AuthorizeView>
     </nav>
 </div>
-
-@code {
-    private bool collapseNavMenu = true;
-
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-
-    private void ToggleNavMenu()
-    {
-        collapseNavMenu = !collapseNavMenu;
-    }
-}

@@ -1,54 +1,68 @@
+@page "/registro"
 @page "/identity/account/register"
 @using Microsoft.AspNetCore.Identity
 @inject UserManager<IdentityUser> UserManager
 @inject SignInManager<IdentityUser> SignInManager
+@inject RoleManager<IdentityRole> RoleManager
 @inject NavigationManager NavigationManager
 
-<PageTitle>Registro de Usuario - GestorDuctos</PageTitle>
+<PageTitle>Registro de Trabajador - GestorDuctos</PageTitle>
 
-<div class="container d-flex justify-content-center align-items-center" style="min-height: 80vh;">
-    <div class="col-md-5">
-        <div class="card shadow-lg border-0 rounded-4 p-5 bg-white">
+<div class="container-fluid min-vh-100 d-flex align-items-center justify-content-center py-5" style="background-color: #0b0f19;">
+    <div class="row w-100 justify-content-center">
+        <div class="col-12 col-md-8 col-lg-5 col-xl-4">
+            
+            <!-- Encabezado -->
             <div class="text-center mb-4">
-                <h3 class="fw-bold text-primary">GestorDuctos</h3>
-                <p class="text-muted small">Crear una nueva cuenta de usuario</p>
-                <hr class="w-25 mx-auto text-primary" style="height: 2px;" />
+                <div class="d-inline-flex align-items-center justify-content-center bg-info bg-opacity-10 border border-info border-opacity-25 rounded-circle p-3 mb-3 shadow-lg" style="width: 70px; height: 70px;">
+                    <i class="bi bi-person-badge-fill text-info fs-3"></i>
+                </div>
+                <h2 class="fw-bold text-white tracking-wide">Gestor<span class="text-info">Ductos</span></h2>
+                <p class="text-muted small">Registro de Personal (Perfil de Consulta)</p>
             </div>
 
-            @if (!string.IsNullOrEmpty(errorMessage))
-            {
-                <div class="alert alert-danger text-center small py-2" role="alert">
-                    @errorMessage
+            <!-- Tarjeta Principal -->
+            <div class="card border-0 rounded-4 shadow-lg" style="background-color: rgba(20, 24, 33, 0.75); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08) !important;">
+                <div class="card-body p-4 p-md-5">
+                    
+                    <h4 class="text-white fw-bold mb-4 text-center">Crear Cuenta</h4>
+
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger text-center small py-2 rounded-3">
+                            @errorMessage
+                        </div>
+                    }
+
+                    <EditForm Model="registerModel" OnValidSubmit="RegistrarUsuario" FormName="RegisterForm">
+                        <DataAnnotationsValidator />
+
+                        <div class="mb-3">
+                            <label class="form-label text-light small fw-semibold text-uppercase" style="letter-spacing: 1px;">Correo electrónico</label>
+                            <InputText @bind-Value="registerModel.Email" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2" autocomplete="username" placeholder="nombre@ejemplo.com" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-light small fw-semibold text-uppercase" style="letter-spacing: 1px;">Contraseña</label>
+                            <InputText type="password" @bind-Value="registerModel.Password" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2" autocomplete="new-password" placeholder="Mínimo 6 caracteres" />
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label text-light small fw-semibold text-uppercase" style="letter-spacing: 1px;">Confirmar contraseña</label>
+                            <InputText type="password" @bind-Value="registerModel.ConfirmPassword" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2" autocomplete="new-password" placeholder="Repita la contraseña" />
+                        </div>
+
+                        <button type="submit" class="w-100 btn btn-info rounded-pill py-3 fw-semibold shadow-sm text-dark">
+                            Registrarse
+                        </button>
+                    </EditForm>
+
+                    <div class="text-center mt-4 border-top border-secondary border-opacity-25 pt-4">
+                        <p class="mb-0 text-muted small">
+                            ¿Ya tienes cuenta? <a href="login" class="text-info text-decoration-none fw-bold">Inicia sesión aquí</a>
+                        </p>
+                    </div>
                 </div>
-            }
-
-          <EditForm Model="registerModel" OnValidSubmit="RegistrarUsuario" FormName="RegisterForm">
-                <DataAnnotationsValidator />
-
-                <div class="form-floating mb-3">
-                    <InputText @bind-Value="registerModel.Email" class="form-control rounded-3" autocomplete="username" placeholder="nombre@ejemplo.com" />
-                    <label class="text-muted">Correo electrónico</label>
-                </div>
-
-                <div class="form-floating mb-3">
-                    <InputText type="password" @bind-Value="registerModel.Password" class="form-control rounded-3" autocomplete="new-password" placeholder="Contraseña" />
-                    <label class="text-muted">Contraseña (Mínimo 6 caracteres)</label>
-                </div>
-
-                <div class="form-floating mb-4">
-                    <InputText type="password" @bind-Value="registerModel.ConfirmPassword" class="form-control rounded-3" autocomplete="new-password" placeholder="Confirmar contraseña" />
-                    <label class="text-muted">Confirmar contraseña</label>
-                </div>
-
-                <button type="submit" class="w-100 btn btn-success btn-lg rounded-3 shadow-sm py-2 fw-semibold">
-                    Registrarse
-                </button>
-            </EditForm>
-
-            <div class="mt-4 text-center border-top pt-3">
-                <p class="mb-0">
-                    <a href="identity/account/login" class="text-decoration-none text-primary small fw-bold">¿Ya tienes cuenta? Inicia sesión aquí</a>
-                </p>
             </div>
         </div>
     </div>
@@ -73,6 +87,15 @@
 
         if (result.Succeeded)
         {
+            // 1. Verificamos si el rol existe, si no, lo creamos
+            if (!await RoleManager.RoleExistsAsync("Trabajador"))
+            {
+                await RoleManager.CreateAsync(new IdentityRole("Trabajador"));
+            }
+            
+            // 2. Asignamos el rol restringido al usuario recién creado
+            await UserManager.AddToRoleAsync(user, "Trabajador");
+
             await SignInManager.SignInAsync(user, isPersistent: false);
             NavigationManager.NavigateTo("/", forceLoad: true);
         }
