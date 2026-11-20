@@ -108,7 +108,7 @@
                 <span class="text-muted small">Historial de registros recientes (Tiempo Real)</span>
             </div>
         </div>
-        
+
         <div class="table-responsive">
             <table class="table table-dark table-hover table-borderless align-middle mb-0" style="background-color: transparent;">
                 <thead style="border-bottom: 1px solid rgba(255,255,255,0.05);">
@@ -162,6 +162,7 @@
     {
         try
         {
+            errorMessage = null;
             var proyectos = await ProyectoService.ObtenerProyectosAsync();
             totalProyectos = proyectos?.Count ?? 0;
 
@@ -177,14 +178,21 @@
         }
         catch (Exception ex)
         {
-            errorMessage = $"No se pudieron cargar algunas estadísticas: {ex.Message}";
+            errorMessage = $"No se pudieron cargar algunas estadísticas: {ex.InnerException?.Message ?? ex.Message}";
         }
     }
 
     private async void ActualizarMovimientosEnVivo()
     {
-        ultimosMovimientos = AuditoriaService.ObtenerUltimosMovimientos();
-        await InvokeAsync(StateHasChanged);
+        try
+        {
+            ultimosMovimientos = AuditoriaService.ObtenerUltimosMovimientos();
+            await InvokeAsync(StateHasChanged);
+        }
+        catch
+        {
+            // Ignora actualizaciones si el circuito ya fue cerrado
+        }
     }
 
     private string ObtenerClaseCategoria(string categoria) => categoria?.ToUpper() switch

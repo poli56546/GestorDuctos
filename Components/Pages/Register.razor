@@ -1,6 +1,7 @@
 @page "/registro"
 @page "/identity/account/register"
 @attribute [AllowAnonymous]
+@using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Identity
 @inject UserManager<IdentityUser> UserManager
 @inject SignInManager<IdentityUser> SignInManager
@@ -12,7 +13,7 @@
 <div class="container-fluid min-vh-100 d-flex align-items-center justify-content-center py-5" style="background-color: #0b0f19;">
     <div class="row w-100 justify-content-center">
         <div class="col-12 col-md-8 col-lg-5 col-xl-4">
-            
+
             <!-- Encabezado -->
             <div class="text-center mb-4">
                 <div class="d-inline-flex align-items-center justify-content-center bg-info bg-opacity-10 border border-info border-opacity-25 rounded-circle p-3 mb-3 shadow-lg" style="width: 70px; height: 70px;">
@@ -25,7 +26,7 @@
             <!-- Tarjeta Principal -->
             <div class="card border-0 rounded-4 shadow-lg" style="background-color: rgba(20, 24, 33, 0.75); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08) !important;">
                 <div class="card-body p-4 p-md-5">
-                    
+
                     <h4 class="text-white fw-bold mb-4 text-center">Crear Cuenta</h4>
 
                     @if (!string.IsNullOrEmpty(errorMessage))
@@ -35,25 +36,26 @@
                         </div>
                     }
 
-                    <EditForm Model="registerModel" OnValidSubmit="RegistrarUsuario" FormName="RegisterForm">
+                    <EditForm Model="registerModel" method="post" OnValidSubmit="RegistrarUsuario" FormName="RegisterForm">
                         <DataAnnotationsValidator />
-                        
-                        <!-- TOKEN DE SEGURIDAD OBLIGATORIO PARA EVITAR ERROR 400 -->
                         <AntiforgeryToken />
 
                         <div class="mb-3">
                             <label class="form-label text-light small fw-semibold text-uppercase" style="letter-spacing: 1px;">Correo electrónico</label>
                             <InputText @bind-Value="registerModel.Email" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2" autocomplete="username" placeholder="nombre@ejemplo.com" />
+                            <ValidationMessage For="() => registerModel.Email" class="text-danger small mt-1" />
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label text-light small fw-semibold text-uppercase" style="letter-spacing: 1px;">Contraseña</label>
                             <InputText type="password" @bind-Value="registerModel.Password" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2" autocomplete="new-password" placeholder="Mínimo 6 caracteres" />
+                            <ValidationMessage For="() => registerModel.Password" class="text-danger small mt-1" />
                         </div>
 
                         <div class="mb-4">
                             <label class="form-label text-light small fw-semibold text-uppercase" style="letter-spacing: 1px;">Confirmar contraseña</label>
                             <InputText type="password" @bind-Value="registerModel.ConfirmPassword" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2" autocomplete="new-password" placeholder="Repita la contraseña" />
+                            <ValidationMessage For="() => registerModel.ConfirmPassword" class="text-danger small mt-1" />
                         </div>
 
                         <button type="submit" class="w-100 btn btn-info rounded-pill py-3 fw-semibold shadow-sm text-dark">
@@ -73,15 +75,26 @@
 </div>
 
 @code {
-    // ATRIBUTO OBLIGATORIO PARA RECIBIR DATOS DEL FORMULARIO Y EVITAR ERROR 400
     [SupplyParameterFromForm]
-    private RegisterInputModel registerModel { get; set; } = new();
-    
+    private RegisterInputModel? registerModel { get; set; }
+
     private string? errorMessage;
+
+    protected override void OnInitialized()
+    {
+        registerModel ??= new();
+    }
 
     private async Task RegistrarUsuario()
     {
+        registerModel ??= new();
         errorMessage = null;
+
+        if (string.IsNullOrWhiteSpace(registerModel.Email) || string.IsNullOrWhiteSpace(registerModel.Password))
+        {
+            errorMessage = "El correo y la contraseña son obligatorios.";
+            return;
+        }
 
         if (registerModel.Password != registerModel.ConfirmPassword)
         {
@@ -89,20 +102,23 @@
             return;
         }
 
-        var user = new IdentityUser { UserName = registerModel.Email, Email = registerModel.Email, EmailConfirmed = true };
+        var user = new IdentityUser
+        {
+            UserName = registerModel.Email.Trim(),
+            Email = registerModel.Email.Trim(),
+            EmailConfirmed = true
+        };
+
         var result = await UserManager.CreateAsync(user, registerModel.Password);
 
         if (result.Succeeded)
         {
-            // 1. Verificamos si el rol existe, si no, lo creamos
             if (!await RoleManager.RoleExistsAsync("Trabajador"))
             {
                 await RoleManager.CreateAsync(new IdentityRole("Trabajador"));
             }
-            
-            // 2. Asignamos el rol restringido al usuario recién creado
-            await UserManager.AddToRoleAsync(user, "Trabajador");
 
+            await UserManager.AddToRoleAsync(user, "Trabajador");
             await SignInManager.SignInAsync(user, isPersistent: false);
             NavigationManager.NavigateTo("/", forceLoad: true);
         }
@@ -114,8 +130,14 @@
 
     public class RegisterInputModel
     {
+        [Required(ErrorMessage = "El correo es obligatorio.")]
+        [EmailAddress(ErrorMessage = "Ingrese un correo electrónico válido.")]
         public string Email { get; set; } = "";
+
+        [Required(ErrorMessage = "La contraseña es obligatoria.")]
         public string Password { get; set; } = "";
+
+        [Required(ErrorMessage = "Confirme su contraseña.")]
         public string ConfirmPassword { get; set; } = "";
     }
 }
