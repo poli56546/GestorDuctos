@@ -5,8 +5,8 @@
 @rendermode InteractiveServer
 @using GestorDuctos.Models
 @inject OficioService OficioService
+@inject SupabaseStorageService StorageService
 @inject NavigationManager NavigationManager
-@inject IWebHostEnvironment WebHostEnvironment
 
 <CascadingAuthenticationState>
     <div class="container-fluid py-4 px-lg-4" style="max-width: 800px;">
@@ -21,7 +21,7 @@
 
         <div class="card panel-formal rounded-4 border-0 shadow-lg" style="background-color: rgba(20, 24, 33, 0.7); backdrop-filter: blur(10px);">
             <div class="card-body p-4 p-md-5">
-                
+
                 @if (!string.IsNullOrEmpty(mensajeError))
                 {
                     <div class="alert alert-danger rounded-3 small mb-4">
@@ -32,9 +32,9 @@
                 <div>
                     <div class="row">
                         <div class="col-md-6 mb-4">
-                            <label class="form-label text-light fw-semibold small text-uppercase" style="letter-spacing: 1px;">Folio *</label>
-                            <input type="text" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2" 
-                                   @bind="nuevoOficio.Folio" placeholder="Ej. OFI-2026-002" />
+                            <label class="form-label text-light fw-semibold small text-uppercase" style="letter-spacing: 1px;">Folio (Automático)</label>
+                            <input type="text" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2"
+                                   @bind="nuevoOficio.Folio" placeholder="Se genera automáticamente (Ej. OF-2026-001)" />
                         </div>
                         <div class="col-md-6 mb-4">
                             <label class="form-label text-light fw-semibold small text-uppercase" style="letter-spacing: 1px;">Tipo de Oficio</label>
@@ -45,34 +45,33 @@
                         </div>
                     </div>
 
-                    <!-- NUEVO CAMPO: Oficio de solicitud No. -->
                     <div class="mb-4">
                         <label class="form-label text-light fw-semibold small text-uppercase" style="letter-spacing: 1px;">Oficio de solicitud No.</label>
-                        <input type="text" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2" 
+                        <input type="text" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2"
                                @bind="nuevoOficio.OficioSolicitudNo" placeholder="Ej. PEMEX-SOL-2026-88" />
                     </div>
 
                     <div class="mb-4">
                         <label class="form-label text-light fw-semibold small text-uppercase" style="letter-spacing: 1px;">Dirigido o en Atención</label>
-                        <input type="text" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2" 
+                        <input type="text" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2"
                                @bind="nuevoOficio.DirigidoAtencion" placeholder="Ej. Ing. Roberto Mendoza / Departamento Técnico" />
                     </div>
 
                     <div class="mb-4">
                         <label class="form-label text-light fw-semibold small text-uppercase" style="letter-spacing: 1px;">Asunto *</label>
-                        <input type="text" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2" 
+                        <input type="text" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2"
                                @bind="nuevoOficio.Asunto" placeholder="Descripción breve del documento" />
                     </div>
 
                     <div class="row">
                         <div class="col-md-6 mb-4">
                             <label class="form-label text-light fw-semibold small text-uppercase" style="letter-spacing: 1px;">Remitente</label>
-                            <input type="text" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2" 
+                            <input type="text" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2"
                                    @bind="nuevoOficio.Remitente" placeholder="Quién emite el oficio" />
                         </div>
                         <div class="col-md-6 mb-4">
                             <label class="form-label text-light fw-semibold small text-uppercase" style="letter-spacing: 1px;">Fecha de la Solicitud</label>
-                            <input type="date" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2" 
+                            <input type="date" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2"
                                    @bind="nuevoOficio.FechaSolicitud" />
                         </div>
                     </div>
@@ -91,8 +90,8 @@
                         <a href="oficios" class="btn btn-outline-secondary rounded-pill px-4">
                             ⬅ Volver al Listado
                         </a>
-                        <button type="button" @onclick="GuardarOficio" class="btn btn-info rounded-pill px-5 shadow-sm fw-semibold text-dark">
-                            Guardar Oficio y Archivo
+                        <button type="button" @onclick="GuardarOficio" disabled="@guardando" class="btn btn-info rounded-pill px-5 shadow-sm fw-semibold text-dark">
+                            @(guardando ? "Guardando..." : "Guardar Oficio y Archivo")
                         </button>
                     </div>
                 </div>
@@ -103,10 +102,14 @@
 </CascadingAuthenticationState>
 
 @code {
-    private Oficio nuevoOficio = new();
+    private Oficio nuevoOficio = new()
+    {
+        FechaSolicitud = DateTime.UtcNow
+    };
     private string? mensajeError;
     private IBrowserFile? archivoSeleccionado;
     private string? nombreArchivo;
+    private bool guardando = false;
 
     private void ManejarSeleccionArchivo(InputFileChangeEventArgs e)
     {
@@ -116,35 +119,43 @@
 
     private async Task GuardarOficio()
     {
+        if (guardando) return;
+        guardando = true;
+
         try
         {
             mensajeError = null;
 
-            if (string.IsNullOrWhiteSpace(nuevoOficio.Folio) || string.IsNullOrWhiteSpace(nuevoOficio.Asunto))
+            if (string.IsNullOrWhiteSpace(nuevoOficio.Asunto))
             {
-                mensajeError = "El Folio y el Asunto son obligatorios.";
+                mensajeError = "El Asunto es obligatorio.";
                 return;
             }
 
             if (archivoSeleccionado != null)
             {
-                string webRootPath = WebHostEnvironment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-                string uploadsFolder = Path.Combine(webRootPath, "uploads", "oficios");
+                using var stream = archivoSeleccionado.OpenReadStream(maxAllowedSize: 30 * 1024 * 1024);
+                var contentType = string.IsNullOrWhiteSpace(archivoSeleccionado.ContentType)
+                    ? "application/octet-stream"
+                    : archivoSeleccionado.ContentType;
 
-                if (!Directory.Exists(uploadsFolder))
+                var resultado = await StorageService.SubirArchivoAsync(
+                    stream,
+                    archivoSeleccionado.Name,
+                    contentType,
+                    "oficios"
+                );
+
+                if (!resultado.Ok || string.IsNullOrWhiteSpace(resultado.StoragePath))
                 {
-                    Directory.CreateDirectory(uploadsFolder);
+                    mensajeError = $"No se pudo subir el archivo a Supabase Storage: {resultado.Error}";
+                    return;
                 }
 
-                string uniqueFileName = $"{Guid.NewGuid()}_{archivoSeleccionado.Name}";
-                string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await archivoSeleccionado.OpenReadStream(maxAllowedSize: 30 * 1024 * 1024).CopyToAsync(stream);
-                }
-
-                nuevoOficio.RutaArchivo = $"/uploads/oficios/{uniqueFileName}";
+                var rutaLimpia = resultado.StoragePath.TrimStart('/');
+                nuevoOficio.RutaArchivo = !string.IsNullOrWhiteSpace(resultado.PublicUrl)
+                    ? resultado.PublicUrl
+                    : $"https://hhtfudrlsxhweuhpodkf.supabase.co/storage/v1/object/public/documentos-ductos/{rutaLimpia}";
                 nuevoOficio.FechaSubida = DateTime.UtcNow;
                 nuevoOficio.TamanoBytes = archivoSeleccionado.Size;
             }
@@ -154,7 +165,11 @@
         }
         catch (Exception ex)
         {
-            mensajeError = $"Error al guardar el oficio: {ex.Message}";
+            mensajeError = $"Error al guardar el oficio: {ex.InnerException?.Message ?? ex.Message}";
+        }
+        finally
+        {
+            guardando = false;
         }
     }
 }
