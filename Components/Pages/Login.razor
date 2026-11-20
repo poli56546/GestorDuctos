@@ -3,11 +3,6 @@
 @page "/Identity/Account/Login"
 @using Microsoft.AspNetCore.Authorization
 @attribute [AllowAnonymous]
-@using System.ComponentModel.DataAnnotations
-@using Microsoft.AspNetCore.Authentication
-@using Microsoft.AspNetCore.Identity
-@inject SignInManager<IdentityUser> SignInManager
-@inject NavigationManager NavigationManager
 
 <PageTitle>Iniciar Sesión - GestorDuctos</PageTitle>
 
@@ -30,31 +25,26 @@
 
                     <h4 class="text-white fw-bold mb-4 text-center">Iniciar Sesión</h4>
 
-                    @if (!string.IsNullOrEmpty(errorMessage))
+                    @if (!string.IsNullOrEmpty(Error))
                     {
                         <div class="alert alert-danger text-center small py-2 rounded-3">
-                            @errorMessage
+                            @(Error == "InvalidCredentials" ? "Error: Intento de inicio de sesión no válido. Verifique sus credenciales." : Error)
                         </div>
                     }
 
-                    <EditForm Model="Input" method="post" OnValidSubmit="LoginUser" FormName="login-form">
-                        <DataAnnotationsValidator />
-                        <AntiforgeryToken />
-
+                    <form method="post" action="/api/auth/login">
                         <div class="mb-3">
                             <label class="form-label text-light small fw-semibold text-uppercase" style="letter-spacing: 1px;">Correo Electrónico</label>
-                            <InputText @bind-Value="Input.Email" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2" autocomplete="username" aria-required="true" placeholder="nombre@ejemplo.com" />
-                            <ValidationMessage For="() => Input.Email" class="text-danger small mt-1" />
+                            <input type="email" name="email" required class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2" autocomplete="username" aria-required="true" placeholder="nombre@ejemplo.com" />
                         </div>
 
                         <div class="mb-4">
                             <label class="form-label text-light small fw-semibold text-uppercase" style="letter-spacing: 1px;">Contraseña</label>
-                            <InputText type="password" @bind-Value="Input.Password" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2" autocomplete="current-password" aria-required="true" placeholder="••••••••" />
-                            <ValidationMessage For="() => Input.Password" class="text-danger small mt-1" />
+                            <input type="password" name="password" required class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2" autocomplete="current-password" aria-required="true" placeholder="••••••••" />
                         </div>
 
                         <div class="mb-4 form-check">
-                            <InputCheckbox @bind-Value="Input.RememberMe" class="form-check-input bg-dark border-secondary" id="rememberMeCheck" />
+                            <input type="checkbox" name="rememberMe" value="true" class="form-check-input bg-dark border-secondary" id="rememberMeCheck" />
                             <label class="form-check-label text-muted small" for="rememberMeCheck">
                                 Recordar en este equipo
                             </label>
@@ -63,7 +53,7 @@
                         <button type="submit" class="w-100 btn btn-primary rounded-pill py-3 fw-semibold shadow-sm text-white">
                             Acceder al Sistema
                         </button>
-                    </EditForm>
+                    </form>
 
                     <!-- Enlace de registro para nuevos trabajadores -->
                     <div class="text-center mt-4 border-top border-secondary border-opacity-25 pt-4">
@@ -85,53 +75,6 @@
 </div>
 
 @code {
-    private string? errorMessage;
-
-    [CascadingParameter]
-    private HttpContext? HttpContext { get; set; }
-
-    [SupplyParameterFromForm]
-    private InputModel? Input { get; set; }
-
-    [SupplyParameterFromQuery]
-    private string? ReturnUrl { get; set; }
-
-    protected override async Task OnInitializedAsync()
-    {
-        Input ??= new();
-
-        if (HttpContext != null && HttpMethods.IsGet(HttpContext.Request.Method))
-        {
-            await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
-        }
-    }
-
-    public async Task LoginUser()
-    {
-        Input ??= new();
-        errorMessage = null;
-
-        var result = await SignInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
-        if (result.Succeeded)
-        {
-            NavigationManager.NavigateTo(ReturnUrl ?? "/", true);
-        }
-        else
-        {
-            errorMessage = "Error: Intento de inicio de sesión no válido. Verifique sus credenciales.";
-        }
-    }
-
-    private sealed class InputModel
-    {
-        [Required(ErrorMessage = "El campo correo es obligatorio.")]
-        [EmailAddress(ErrorMessage = "Ingrese un correo electrónico válido.")]
-        public string Email { get; set; } = "";
-
-        [Required(ErrorMessage = "La contraseña es obligatoria.")]
-        [DataType(DataType.Password)]
-        public string Password { get; set; } = "";
-
-        public bool RememberMe { get; set; }
-    }
-} 
+    [SupplyParameterFromQuery(Name = "error")]
+    private string? Error { get; set; }
+}
