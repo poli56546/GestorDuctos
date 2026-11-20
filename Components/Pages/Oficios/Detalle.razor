@@ -255,7 +255,7 @@
         {
             nuevaRespuesta.OficioId = oficio.Id;
             nuevaRespuesta.Autor = usuarioActual;
-            nuevaRespuesta.FechaRespuesta = DateTime.Now;
+            nuevaRespuesta.FechaRespuesta = DateTime.UtcNow;
 
             await OficioService.AgregarRespuestaAsync(nuevaRespuesta);
 

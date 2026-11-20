@@ -21,7 +21,7 @@ namespace GestorDuctos.Services
         public async Task GuardarProyectoAsync(Proyecto proyecto)
         {
             // Asignar la fecha actual obligatoriamente para cumplir con la restricción de la base de datos
-            proyecto.FechaCreacion = DateTime.Now;
+            proyecto.FechaCreacion = DateTime.UtcNow;
 
             // Cuenta cuántos hay y le suma 1. Formato: PRJ-001, PRJ-002...
             var total = await _context.Proyectos.CountAsync();

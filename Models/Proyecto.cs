@@ -7,6 +7,6 @@ namespace GestorDuctos.Models
         public string Nombre { get; set; } = string.Empty;
         public string? ContratoCliente { get; set; }
         public string Descripcion { get; set; } = string.Empty;
-        public DateTime FechaCreacion { get; set; } = DateTime.Now;
+        public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
     }
 }

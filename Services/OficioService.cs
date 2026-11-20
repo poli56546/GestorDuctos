@@ -34,7 +34,7 @@ namespace GestorDuctos.Services
         {
             // Formato: OF-2026-001, OF-2026-002... (Incluye el año actual)
             var total = await _context.Oficios.CountAsync();
-            oficio.Folio = $"OF-{DateTime.Now.Year}-{(total + 1).ToString("D3")}";
+            oficio.Folio = $"OF-{DateTime.UtcNow.Year}-{(total + 1).ToString("D3")}";
 
             _context.Oficios.Add(oficio);
             await _context.SaveChangesAsync();

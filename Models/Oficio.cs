@@ -5,7 +5,7 @@ namespace GestorDuctos.Models
         public int Id { get; set; }
         public string Folio { get; set; } = string.Empty;
         public string Tipo { get; set; } = string.Empty; // Interno, Entrada, Salida
-        public DateTime Fecha { get; set; } = DateTime.Now;
+        public DateTime Fecha { get; set; } = DateTime.UtcNow;
         public string Asunto { get; set; } = string.Empty;
         public string? DirigidoAtencion { get; set; } // Dirigido o en atención
         public string? TipoOficio { get; set; }      // Ej. "Oficio de la empresa" o "Seguimiento de oficio de PEMEX"

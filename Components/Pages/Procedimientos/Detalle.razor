@@ -157,7 +157,7 @@
             OficioId = Id,
             Autor = usuarioActual,
             Comentario = nuevoComentario,
-            FechaRespuesta = DateTime.Now
+            FechaRespuesta = DateTime.UtcNow
         };
 
         await ProcedimientosService.AgregarRespuestaAsync(respuesta);

@@ -4,5 +4,5 @@ public class OficioRespuesta
     public int OficioId { get; set; }
     public string Comentario { get; set; } = string.Empty;
     public string Autor { get; set; } = string.Empty;
-    public DateTime FechaRespuesta { get; set; } = DateTime.Now;
+    public DateTime FechaRespuesta { get; set; } = DateTime.UtcNow;
 }

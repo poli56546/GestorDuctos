@@ -145,7 +145,7 @@
                 }
 
                 nuevoPlano.RutaArchivo = $"/uploads/planos/{uniqueFileName}";
-                nuevoPlano.FechaSubida = DateTime.Now;
+                nuevoPlano.FechaSubida = DateTime.UtcNow;
                 nuevoPlano.TamanoBytes = archivoSeleccionado.Size;
             }
 

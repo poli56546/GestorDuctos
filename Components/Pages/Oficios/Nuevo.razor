@@ -145,7 +145,7 @@
                 }
 
                 nuevoOficio.RutaArchivo = $"/uploads/oficios/{uniqueFileName}";
-                nuevoOficio.FechaSubida = DateTime.Now;
+                nuevoOficio.FechaSubida = DateTime.UtcNow;
                 nuevoOficio.TamanoBytes = archivoSeleccionado.Size;
             }
 

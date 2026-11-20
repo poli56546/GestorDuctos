@@ -8,7 +8,7 @@ namespace GestorDuctos.Models
         public string Version { get; set; } = "V1";            // Versión del documento
         public string Area { get; set; } = string.Empty;       // Ej: Calidad, Construcción, Seguridad
         public string Responsable { get; set; } = string.Empty; // Quién lo elaboró o aprueba
-        public DateTime FechaEmision { get; set; } = DateTime.Now;
+        public DateTime FechaEmision { get; set; } = DateTime.UtcNow;
         public int? ProyectoId { get; set; }
         public Proyecto? ProyectoRelacionado { get; set; }
     }
