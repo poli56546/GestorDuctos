@@ -129,6 +129,56 @@ app.MapPost("/api/auth/login", async (HttpContext context, SignInManager<Identit
     }
 }).DisableAntiforgery();
 
+app.MapPost("/api/auth/register", async (
+    HttpContext context,
+    UserManager<IdentityUser> userManager,
+    SignInManager<IdentityUser> signInManager,
+    RoleManager<IdentityRole> roleManager) =>
+{
+    var form = await context.Request.ReadFormAsync();
+    string email = form["email"].ToString().Trim();
+    string password = form["password"].ToString();
+    string confirmPassword = form["confirmPassword"].ToString();
+
+    if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+    {
+        context.Response.Redirect("/registro?error=" + Uri.EscapeDataString("El correo y la contraseña son obligatorios."));
+        return;
+    }
+
+    if (password != confirmPassword)
+    {
+        context.Response.Redirect("/registro?error=" + Uri.EscapeDataString("Las contraseñas no coinciden."));
+        return;
+    }
+
+    var user = new IdentityUser
+    {
+        UserName = email,
+        Email = email,
+        EmailConfirmed = true
+    };
+
+    var result = await userManager.CreateAsync(user, password);
+
+    if (result.Succeeded)
+    {
+        if (!await roleManager.RoleExistsAsync("Trabajador"))
+        {
+            await roleManager.CreateAsync(new IdentityRole("Trabajador"));
+        }
+
+        await userManager.AddToRoleAsync(user, "Trabajador");
+        await signInManager.SignInAsync(user, isPersistent: false);
+        context.Response.Redirect("/");
+    }
+    else
+    {
+        var msg = string.Join(" ", result.Errors.Select(e => e.Description));
+        context.Response.Redirect("/registro?error=" + Uri.EscapeDataString(msg));
+    }
+}).DisableAntiforgery();
+
 app.MapPost("/api/auth/logout", async (HttpContext context, SignInManager<IdentityUser> signInManager) =>
 {
     await signInManager.SignOutAsync();
