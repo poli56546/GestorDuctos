@@ -25,15 +25,14 @@
 
         <div class="card panel-formal rounded-4 border-0 shadow-lg" style="background-color: rgba(20, 24, 33, 0.7); backdrop-filter: blur(10px);">
             <div class="card-body p-4 p-md-5">
-                
-                <EditForm Model="nuevoProyecto" OnValidSubmit="GuardarProyecto">
+
+                <EditForm Model="nuevoProyecto" OnValidSubmit="GuardarProyecto" FormName="NuevoProyectoForm">
                     <DataAnnotationsValidator />
-                    <AntiforgeryToken />
 
                     <div class="mb-4">
                         <label class="form-label text-light fw-semibold small text-uppercase" style="letter-spacing: 1px;">Nombre del Proyecto *</label>
                         <InputText class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2"
-                                    @bind-Value="nuevoProyecto.Nombre"
+                                   @bind-Value="nuevoProyecto.Nombre"
                                    placeholder="Ej. Ducto Regional Sur" />
                         <ValidationMessage For="() => nuevoProyecto.Nombre" class="text-danger small mt-1" />
                     </div>
@@ -41,7 +40,7 @@
                     <div class="mb-4">
                         <label class="form-label text-light fw-semibold small text-uppercase" style="letter-spacing: 1px;">Clave de la Obra *</label>
                         <InputText class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2"
-                                    @bind-Value="nuevoProyecto.Clave"
+                                   @bind-Value="nuevoProyecto.Clave"
                                    placeholder="Ej. OBRA-001" />
                         <ValidationMessage For="() => nuevoProyecto.Clave" class="text-danger small mt-1" />
                     </div>
@@ -49,15 +48,15 @@
                     <div class="mb-4">
                         <label class="form-label text-light fw-semibold small text-uppercase" style="letter-spacing: 1px;">Contrato del Cliente</label>
                         <InputText class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2"
-                                    @bind-Value="nuevoProyecto.ContratoCliente"
+                                   @bind-Value="nuevoProyecto.ContratoCliente"
                                    placeholder="Ej. C-2026-001" />
                     </div>
 
                     <div class="mb-4">
                         <label class="form-label text-light fw-semibold small text-uppercase" style="letter-spacing: 1px;">Descripción General</label>
                         <InputTextArea class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2"
-                                        rows="4"
-                                        @bind-Value="nuevoProyecto.Descripcion"
+                                       rows="4"
+                                       @bind-Value="nuevoProyecto.Descripcion"
                                        placeholder="Detalles generales de la obra, gerencia o tramo..." />
                     </div>
 
@@ -77,7 +76,6 @@
 </CascadingAuthenticationState>
 
 @code {
-    [SupplyParameterFromForm]
     private Proyecto nuevoProyecto { get; set; } = new();
 
     private string? errorMessage;
@@ -99,7 +97,6 @@
                 return;
             }
 
-            // Asignamos la fecha de creación automáticamente si no viene cargada
             if (nuevoProyecto.FechaCreacion == default)
             {
                 nuevoProyecto.FechaCreacion = DateTime.Now;
