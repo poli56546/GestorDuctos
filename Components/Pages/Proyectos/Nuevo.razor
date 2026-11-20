@@ -1,4 +1,6 @@
 @page "/proyectos/nuevo"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Administrador")]
 @rendermode InteractiveServer
 @using GestorDuctos.Models
 @using GestorDuctos.Services
@@ -12,8 +14,7 @@
                 <div class="p-4 panel-formal rounded-4 border-start border-primary border-5"
                      style="background-color: rgba(255,255,255,0.02);">
                     <h2 class="fw-bold mb-1 text-white">Registrar Nuevo Proyecto</h2>
-                    <p class="text-muted mb-0">Alta de nueva obra, asignación de contrato y especificaciones generales.
-                    </p>
+                    <p class="text-muted mb-0">Alta de nueva obra, asignación de contrato y especificaciones generales.</p>
                 </div>
             </div>
         </div>
@@ -36,8 +37,8 @@
                         <label class="form-label text-light fw-semibold small text-uppercase"
                                style="letter-spacing: 1px;">Nombre del Proyecto *</label>
                         <InputText
-                        class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2"
-                        @bind-Value="nuevoProyecto.Nombre" placeholder="Ej. Ducto Regional Sur" />
+                            class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2"
+                            @bind-Value="nuevoProyecto.Nombre" placeholder="Ej. Ducto Regional Sur" />
                         <ValidationMessage For="() => nuevoProyecto.Nombre" class="text-danger small mt-1" />
                     </div>
 
@@ -45,8 +46,8 @@
                         <label class="form-label text-light fw-semibold small text-uppercase"
                                style="letter-spacing: 1px;">Clave de la Obra *</label>
                         <InputText
-                        class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2"
-                        @bind-Value="nuevoProyecto.Clave" placeholder="Ej. OBRA-001" />
+                            class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2"
+                            @bind-Value="nuevoProyecto.Clave" placeholder="Ej. OBRA-001" />
                         <ValidationMessage For="() => nuevoProyecto.Clave" class="text-danger small mt-1" />
                     </div>
 
@@ -54,27 +55,26 @@
                         <label class="form-label text-light fw-semibold small text-uppercase"
                                style="letter-spacing: 1px;">Contrato del Cliente</label>
                         <InputText
-                        class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2"
-                        @bind-Value="nuevoProyecto.ContratoCliente" placeholder="Ej. C-2026-001" />
+                            class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2"
+                            @bind-Value="nuevoProyecto.ContratoCliente" placeholder="Ej. C-2026-001" />
                     </div>
 
                     <div class="mb-4">
                         <label class="form-label text-light fw-semibold small text-uppercase"
                                style="letter-spacing: 1px;">Descripción General</label>
                         <InputTextArea
-                        class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2"
-                        rows="4" @bind-Value="nuevoProyecto.Descripcion"
-                        placeholder="Detalles generales de la obra, gerencia o tramo..." />
+                            class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2"
+                            rows="4" @bind-Value="nuevoProyecto.Descripcion"
+                            placeholder="Detalles generales de la obra, gerencia o tramo..." />
                     </div>
 
-                    <div
-                        class="d-flex justify-content-between align-items-center mt-5 pt-3 border-top border-secondary border-opacity-10">
+                    <div class="d-flex justify-content-between align-items-center mt-5 pt-3 border-top border-secondary border-opacity-10">
                         <a href="proyectos" class="btn btn-outline-secondary rounded-pill px-4">
                             Volver al Listado
                         </a>
-                        <button type="submit"
+                        <button type="submit" disabled="@guardando"
                                 class="btn btn-primary rounded-pill px-5 shadow-sm fw-semibold text-white">
-                            Guardar Proyecto
+                            @(guardando ? "Guardando..." : "Guardar Proyecto")
                         </button>
                     </div>
                 </EditForm>
@@ -86,8 +86,8 @@
 
 @code {
     private Proyecto nuevoProyecto { get; set; } = new();
-
     private string? errorMessage;
+    private bool guardando = false;
 
     protected override void OnInitialized()
     {
@@ -96,6 +96,9 @@
 
     private async Task GuardarProyecto()
     {
+        if (guardando) return;
+        guardando = true;
+
         try
         {
             errorMessage = null;
@@ -110,13 +113,21 @@
             {
                 nuevoProyecto.FechaCreacion = DateTime.UtcNow;
             }
+            else if (nuevoProyecto.FechaCreacion.Kind != DateTimeKind.Utc)
+            {
+                nuevoProyecto.FechaCreacion = nuevoProyecto.FechaCreacion.ToUniversalTime();
+            }
 
             await ProyectoService.GuardarProyectoAsync(nuevoProyecto);
             NavigationManager.NavigateTo("proyectos");
         }
         catch (Exception ex)
         {
-            errorMessage = $"Error al guardar el proyecto: {ex.Message}";
+            errorMessage = $"Error al guardar el proyecto: {ex.InnerException?.Message ?? ex.Message}";
+        }
+        finally
+        {
+            guardando = false;
         }
     }
 }

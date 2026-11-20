@@ -29,6 +29,20 @@ namespace GestorDuctos.Services
 
             _context.Proyectos.Add(proyecto);
             await _context.SaveChangesAsync();
-        } 
-    } 
+        }
+        public async Task AgregarRespuestaAsync(OficioRespuesta respuesta)
+        {
+            if (respuesta.FechaRespuesta == default)
+            {
+                respuesta.FechaRespuesta = DateTime.UtcNow;
+            }
+            else if (respuesta.FechaRespuesta.Kind != DateTimeKind.Utc)
+            {
+                respuesta.FechaRespuesta = DateTime.SpecifyKind(respuesta.FechaRespuesta, DateTimeKind.Utc);
+            }
+
+            _context.Add(respuesta);
+            await _context.SaveChangesAsync();
+        }
+    }
 }

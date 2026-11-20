@@ -2,7 +2,7 @@
 @rendermode InteractiveServer
 @using GestorDuctos.Models
 @using GestorDuctos.Services
-@inject ProcedimientoService ProcedimientoService
+@inject IProcedimientosService ProcedimientosService
 
 <CascadingAuthenticationState>
     <div class="container-fluid py-4 px-lg-4">
@@ -14,7 +14,7 @@
                     <p class="text-muted mb-0">Normativa técnica, manuales y procedimientos operativos estandarizados.</p>
                 </div>
             </div>
-            
+
             <div class="col-12 col-md-4 text-md-end mt-3 mt-md-0">
                 <AuthorizeView Roles="Administrador">
                     <Authorized Context="authContext">
@@ -29,17 +29,24 @@
             </div>
         </div>
 
+        @if (!string.IsNullOrEmpty(errorCarga))
+        {
+            <div class="alert alert-danger rounded-3 small mb-4">
+                <strong>Atención:</strong> @errorCarga
+            </div>
+        }
+
         <!-- Contenedor / Tarjeta Estilizada -->
         <div class="card panel-formal rounded-4 border-0 shadow-lg" style="background-color: rgba(20, 24, 33, 0.7); backdrop-filter: blur(10px);">
             <div class="card-body p-0">
-                @if (procedimientos == null)
+                @if (procedimientos == null && string.IsNullOrEmpty(errorCarga))
                 {
                     <div class="text-center py-5">
                         <div class="spinner-border text-warning" role="status"></div>
                         <p class="text-muted mt-2">Cargando procedimientos...</p>
                     </div>
                 }
-                else if (!procedimientos.Any())
+                else if (procedimientos == null || !procedimientos.Any())
                 {
                     <div class="text-center py-5">
                         <p class="text-muted fs-5 mb-1">No hay procedimientos registrados en el SGC todavía.</p>
@@ -97,9 +104,17 @@
 
 @code {
     private List<Procedimiento>? procedimientos;
+    private string? errorCarga;
 
     protected override async Task OnInitializedAsync()
     {
-        procedimientos = await ProcedimientoService.ObtenerProcedimientosAsync();
+        try
+        {
+            procedimientos = await ProcedimientosService.ObtenerProcedimientosAsync();
+        }
+        catch (Exception ex)
+        {
+            errorCarga = $"Error al cargar procedimientos: {ex.InnerException?.Message ?? ex.Message}";
+        }
     }
 }

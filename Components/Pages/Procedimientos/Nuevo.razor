@@ -18,16 +18,22 @@
             </div>
         </div>
 
+        @if (!string.IsNullOrEmpty(mensajeError))
+        {
+            <div class="alert alert-danger rounded-3 small mb-4">
+                <strong>Atención:</strong> @mensajeError
+            </div>
+        }
+
         <div class="card panel-formal rounded-4 border-0 shadow-lg" style="background-color: rgba(20, 24, 33, 0.7); backdrop-filter: blur(10px);">
             <div class="card-body p-4 p-md-5">
-                
+
                 <EditForm Model="nuevoProcedimiento" OnValidSubmit="GuardarProcedimiento" FormName="FormularioNuevoProcedimiento">
                     <DataAnnotationsValidator />
-                    <AntiforgeryToken />
 
                     <div class="mb-4">
-                        <label class="form-label text-light fw-semibold small text-uppercase" style="letter-spacing: 1px;">Título del Procedimiento</label>
-                        <InputText class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2" 
+                        <label class="form-label text-light fw-semibold small text-uppercase" style="letter-spacing: 1px;">Título del Procedimiento *</label>
+                        <InputText class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2"
                                    @bind-Value="nuevoProcedimiento.Titulo"
                                    placeholder="Ej. Procedimiento de Soldadura en Línea" />
                         <ValidationMessage For="() => nuevoProcedimiento.Titulo" class="text-danger small mt-1" />
@@ -36,13 +42,13 @@
                     <div class="row">
                         <div class="col-md-6 mb-4">
                             <label class="form-label text-light fw-semibold small text-uppercase" style="letter-spacing: 1px;">Área / Proceso</label>
-                            <InputText class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2" 
+                            <InputText class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2"
                                        @bind-Value="nuevoProcedimiento.Area"
                                        placeholder="Ej. Operaciones, Calidad, Seguridad" />
                         </div>
                         <div class="col-md-6 mb-4">
                             <label class="form-label text-light fw-semibold small text-uppercase" style="letter-spacing: 1px;">Versión</label>
-                            <InputText class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2" 
+                            <InputText class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2"
                                        @bind-Value="nuevoProcedimiento.Version"
                                        placeholder="Ej. Rev. 01" />
                         </div>
@@ -52,31 +58,47 @@
                         <a href="procedimientos" class="btn btn-outline-secondary rounded-pill px-4">
                             ⬅ Volver al Listado
                         </a>
-                        <button type="submit" class="btn btn-warning rounded-pill px-5 shadow-sm fw-semibold text-dark">
-                            Guardar Procedimiento
+                        <button type="submit" disabled="@guardando" class="btn btn-warning rounded-pill px-5 shadow-sm fw-semibold text-dark">
+                            @(guardando ? "Guardando..." : "Guardar Procedimiento")
                         </button>
                     </div>
                 </EditForm>
-                
+
             </div>
         </div>
     </div>
 </CascadingAuthenticationState>
 
 @code {
-    [SupplyParameterFromForm]
-    private Procedimiento nuevoProcedimiento { get; set; } = default!;
-
-    protected override void OnInitialized()
-    {
-        nuevoProcedimiento ??= new();
-    }
+    private Procedimiento nuevoProcedimiento { get; set; } = new();
+    private string? mensajeError;
+    private bool guardando = false;
 
     private async Task GuardarProcedimiento()
     {
-        if (string.IsNullOrWhiteSpace(nuevoProcedimiento.Titulo)) return;
+        if (guardando) return;
+        guardando = true;
 
-        await ProcedimientosService.GuardarProcedimientoAsync(nuevoProcedimiento);
-        NavigationManager.NavigateTo("procedimientos");
+        try
+        {
+            mensajeError = null;
+
+            if (string.IsNullOrWhiteSpace(nuevoProcedimiento.Titulo))
+            {
+                mensajeError = "El título del procedimiento es obligatorio.";
+                return;
+            }
+
+            await ProcedimientosService.GuardarProcedimientoAsync(nuevoProcedimiento);
+            NavigationManager.NavigateTo("procedimientos");
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al guardar el procedimiento: {ex.InnerException?.Message ?? ex.Message}";
+        }
+        finally
+        {
+            guardando = false;
+        }
     }
 }

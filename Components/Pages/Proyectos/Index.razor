@@ -27,17 +27,24 @@
         </div>
     </div>
 
+    @if (!string.IsNullOrEmpty(errorCarga))
+    {
+        <div class="alert alert-danger rounded-3 small mb-4">
+            <strong>Atención:</strong> @errorCarga
+        </div>
+    }
+
     <!-- Tabla de Proyectos Moderna -->
     <div class="card panel-formal rounded-4 border-0 shadow-lg" style="background-color: rgba(20, 24, 33, 0.7); backdrop-filter: blur(10px);">
         <div class="card-body p-0">
-            @if (proyectos == null)
+            @if (proyectos == null && string.IsNullOrEmpty(errorCarga))
             {
                 <div class="text-center py-5">
                     <div class="spinner-border text-primary" role="status"></div>
                     <p class="text-muted mt-2">Cargando proyectos del sistema...</p>
                 </div>
             }
-            else if (!proyectos.Any())
+            else if (proyectos == null || !proyectos.Any())
             {
                 <div class="text-center py-5">
                     <p class="text-muted fs-5 mb-1">No hay proyectos registrados en el sistema todavía.</p>
@@ -58,7 +65,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var p in proyectos)
+                            @foreach (var p in proyectos.OrderByDescending(x => x.FechaCreacion))
                             {
                                 <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
                                     <td class="ps-4 py-3">
@@ -85,7 +92,7 @@
                                         @(string.IsNullOrEmpty(p.Descripcion) ? "Sin descripción detallada" : p.Descripcion)
                                     </td>
                                     <td class="text-muted text-end pe-4 small">
-                                        @p.FechaCreacion.ToString("dd/MM/yyyy")
+                                        @p.FechaCreacion.ToLocalTime().ToString("dd/MM/yyyy")
                                     </td>
                                 </tr>
                             }
@@ -99,9 +106,17 @@
 
 @code {
     private List<Proyecto>? proyectos;
+    private string? errorCarga;
 
     protected override async Task OnInitializedAsync()
     {
-        proyectos = await ProyectoService.ObtenerProyectosAsync();
+        try
+        {
+            proyectos = await ProyectoService.ObtenerProyectosAsync();
+        }
+        catch (Exception ex)
+        {
+            errorCarga = $"No se pudieron cargar los proyectos: {ex.InnerException?.Message ?? ex.Message}";
+        }
     }
 }

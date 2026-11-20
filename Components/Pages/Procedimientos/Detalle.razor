@@ -22,14 +22,21 @@
             </div>
         </div>
 
-        @if (procedimiento == null)
+        @if (!string.IsNullOrEmpty(mensajeError))
+        {
+            <div class="alert alert-danger rounded-3 small mb-4">
+                <strong>Atención:</strong> @mensajeError
+            </div>
+        }
+
+        @if (procedimiento == null && string.IsNullOrEmpty(mensajeError))
         {
             <div class="text-center py-5">
                 <div class="spinner-border text-warning" role="status"></div>
                 <p class="text-muted mt-2">Cargando información del procedimiento...</p>
             </div>
         }
-        else
+        else if (procedimiento != null)
         {
             <div class="row g-4">
                 <!-- Columna Izquierda: Ficha Técnica del Procedimiento -->
@@ -78,8 +85,7 @@
                             <h5 class="card-title text-white mb-0 fw-bold">Bitácora de Modificaciones</h5>
                             <span class="badge bg-dark border border-secondary border-opacity-25 text-muted">Control SGC</span>
                         </div>
-                        
-                        <!-- Lista de cambios / versiones con scroll -->
+
                         <div class="card-body flex-grow-1 p-4" style="max-height: 400px; overflow-y: auto;">
                             @if (historialCambios == null || !historialCambios.Any())
                             {
@@ -94,7 +100,7 @@
                                     <div class="border-start border-warning ps-3 mb-4 ms-2">
                                         <div class="d-flex justify-content-between align-items-center mb-1">
                                             <strong class="text-warning">@cambio.Autor</strong>
-                                            <small class="text-muted" style="font-size: 0.8rem;">@cambio.FechaRespuesta.ToString("dd/MM/yyyy HH:mm")</small>
+                                            <small class="text-muted" style="font-size: 0.8rem;">@cambio.FechaRespuesta.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</small>
                                         </div>
                                         <p class="text-light mb-0" style="white-space: pre-wrap;">@cambio.Comentario</p>
                                     </div>
@@ -102,15 +108,14 @@
                             }
                         </div>
 
-                        <!-- Panel interactivo para registrar nueva nota o actualización de versión -->
                         <div class="card-footer border-top border-secondary border-opacity-10 bg-transparent p-4">
                             <div class="input-group">
-                                <textarea class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-start-4 px-3 py-2" 
-                                          rows="2" 
+                                <textarea class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-start-4 px-3 py-2"
+                                          rows="2"
                                           placeholder="Registrar nueva modificación, justificación de cambio o revisión..."
                                           @bind="nuevoComentario"></textarea>
-                                <button type="button" @onclick="RegistrarCambio" class="btn btn-warning px-4 rounded-end-4 fw-semibold text-dark">
-                                    <span>Registrar Cambio</span>
+                                <button type="button" @onclick="RegistrarCambio" disabled="@guardandoCambio" class="btn btn-warning px-4 rounded-end-4 fw-semibold text-dark">
+                                    <span>@(guardandoCambio ? "Guardando..." : "Registrar Cambio")</span>
                                 </button>
                             </div>
                         </div>
@@ -122,50 +127,74 @@
 </CascadingAuthenticationState>
 
 @code {
-    [Parameter] 
+    [Parameter]
     public int Id { get; set; }
 
     private Procedimiento? procedimiento;
     private List<OficioRespuesta> historialCambios = new();
     private string nuevoComentario = string.Empty;
     private string usuarioActual = "Auditor SGC";
+    private string? mensajeError;
+    private bool guardandoCambio = false;
 
     protected override async Task OnInitializedAsync()
     {
         await CargarDatos();
 
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        if (authState.User.Identity is { IsAuthenticated: true })
+        try
         {
-            usuarioActual = authState.User.Identity.Name ?? "Auditor";
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            if (authState.User.Identity is { IsAuthenticated: true })
+            {
+                usuarioActual = authState.User.Identity.Name ?? "Auditor";
+            }
+        }
+        catch
+        {
+            usuarioActual = "Auditor SGC";
         }
     }
 
     private async Task CargarDatos()
     {
-        procedimiento = await ProcedimientosService.ObtenerProcedimientoPorIdAsync(Id);
-        // Simulamos o cargamos el historial filtrado por este ID si tu base de datos lo soporta
-        // historialCambios = await ProcedimientosService.ObtenerHistorialAsync(Id);
+        try
+        {
+            mensajeError = null;
+            procedimiento = await ProcedimientosService.ObtenerProcedimientoPorIdAsync(Id);
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al cargar procedimiento: {ex.InnerException?.Message ?? ex.Message}";
+        }
     }
 
     private async Task RegistrarCambio()
     {
-        if (string.IsNullOrWhiteSpace(nuevoComentario) || procedimiento == null) return;
+        if (guardandoCambio || string.IsNullOrWhiteSpace(nuevoComentario) || procedimiento == null) return;
+        guardandoCambio = true;
 
-        var respuesta = new OficioRespuesta
+        try
         {
-            OficioId = Id,
-            Autor = usuarioActual,
-            Comentario = nuevoComentario,
-            FechaRespuesta = DateTime.UtcNow
-        };
+            mensajeError = null;
+            var respuesta = new OficioRespuesta
+            {
+                OficioId = Id,
+                Autor = usuarioActual,
+                Comentario = nuevoComentario,
+                FechaRespuesta = DateTime.UtcNow
+            };
 
-        await ProcedimientosService.AgregarRespuestaAsync(respuesta);
-        
-        // Añadimos localmente a la lista para visualización inmediata
-        historialCambios.Add(respuesta);
-
-        nuevoComentario = string.Empty;
-        StateHasChanged();
+            await ProcedimientosService.AgregarRespuestaAsync(respuesta);
+            historialCambios.Add(respuesta);
+            nuevoComentario = string.Empty;
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al registrar el cambio: {ex.InnerException?.Message ?? ex.Message}";
+        }
+        finally
+        {
+            guardandoCambio = false;
+        }
     }
 }
