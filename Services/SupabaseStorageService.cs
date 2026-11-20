@@ -1,5 +1,6 @@
+using System.Linq;
 using System.Net.Http.Headers;
-using System.Text.Json;
+using Microsoft.Extensions.Configuration;
 
 namespace GestorDuctos.Services
 {
@@ -24,7 +25,7 @@ namespace GestorDuctos.Services
 
             _supabaseUrl = (configuration["SUPABASE_URL"]
                 ?? Environment.GetEnvironmentVariable("SUPABASE_URL")
-                ?? "https://hhtfudrlsxhweuhpodkf.supabase.co").TrimEnd('/');[cite: 1]
+                ?? "https://hhtfudrlsxhweuhpodkf.supabase.co").TrimEnd('/');
 
             _serviceKey = configuration["SUPABASE_SERVICE_KEY"]
                 ?? Environment.GetEnvironmentVariable("SUPABASE_SERVICE_KEY")
@@ -32,7 +33,7 @@ namespace GestorDuctos.Services
 
             _bucketName = configuration["SUPABASE_BUCKET"]
                 ?? Environment.GetEnvironmentVariable("SUPABASE_BUCKET")
-                ?? "documentos-ductos";[cite: 1]
+                ?? "documentos-ductos";
         }
 
         public async Task<SupabaseUploadResult> SubirArchivoAsync(
