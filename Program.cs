@@ -42,7 +42,7 @@ builder.Services.AddSingleton<AuditoriaService>();
 builder.Services.AddScoped<ProcedimientoService>();
 builder.Services.AddScoped<IProcedimientosService, ProcedimientoService>();
 builder.Services.AddScoped<ProyectoService>();
-
+builder.Services.AddCascadingAuthenticationState();
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
