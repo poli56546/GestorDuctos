@@ -29,6 +29,6 @@ namespace GestorDuctos.Services
 
             _context.Proyectos.Add(proyecto);
             await _context.SaveChangesAsync();
-        }
-    }
+        } 
+    } 
 }

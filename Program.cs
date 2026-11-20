@@ -43,7 +43,7 @@ builder.Services.AddScoped<ProcedimientoService>();
 builder.Services.AddScoped<IProcedimientosService, ProcedimientoService>();
 builder.Services.AddScoped<ProyectoService>();
 builder.Services.AddCascadingAuthenticationState();
-// Add services to the container.
+builder.Services.AddHttpClient<SupabaseStorageService>();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 

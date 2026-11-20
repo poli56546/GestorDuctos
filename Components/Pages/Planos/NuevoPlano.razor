@@ -5,8 +5,8 @@
 @rendermode InteractiveServer
 @using GestorDuctos.Models
 @inject PlanoService PlanoService
+@inject SupabaseStorageService StorageService
 @inject NavigationManager NavigationManager
-@inject IWebHostEnvironment WebHostEnvironment
 
 <CascadingAuthenticationState>
     <div class="container-fluid py-4 px-lg-4" style="max-width: 800px;">
@@ -21,7 +21,7 @@
 
         <div class="card panel-formal rounded-4 border-0 shadow-lg" style="background-color: rgba(20, 24, 33, 0.7); backdrop-filter: blur(10px);">
             <div class="card-body p-4 p-md-5">
-                
+
                 @if (!string.IsNullOrEmpty(mensajeError))
                 {
                     <div class="alert alert-danger rounded-3 small mb-4">
@@ -32,14 +32,14 @@
                 <div>
                     <div class="mb-4">
                         <label class="form-label text-light fw-semibold small text-uppercase" style="letter-spacing: 1px;">Código / Identificador</label>
-                        <input type="text" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2" 
+                        <input type="text" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2"
                                @bind="nuevoPlano.CodigoPlano"
                                placeholder="Ej. PL-MEC-001" />
                     </div>
 
                     <div class="mb-4">
                         <label class="form-label text-light fw-semibold small text-uppercase" style="letter-spacing: 1px;">Nombre del Plano *</label>
-                        <input type="text" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2" 
+                        <input type="text" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2"
                                @bind="nuevoPlano.Nombre"
                                placeholder="Ej. Trazado General de Línea" />
                     </div>
@@ -47,13 +47,13 @@
                     <div class="row">
                         <div class="col-md-6 mb-4">
                             <label class="form-label text-light fw-semibold small text-uppercase" style="letter-spacing: 1px;">Disciplina</label>
-                            <input type="text" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2" 
+                            <input type="text" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2"
                                    @bind="nuevoPlano.Disciplina"
                                    placeholder="Ej. Civil, Mecánica, Instrumentación" />
                         </div>
                         <div class="col-md-6 mb-4">
                             <label class="form-label text-light fw-semibold small text-uppercase" style="letter-spacing: 1px;">Versión</label>
-                            <input type="text" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2" 
+                            <input type="text" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2"
                                    @bind="nuevoPlano.Version"
                                    placeholder="Ej. A, B, 01" />
                         </div>
@@ -61,7 +61,7 @@
 
                     <div class="mb-4">
                         <label class="form-label text-light fw-semibold small text-uppercase" style="letter-spacing: 1px;">Autorización / Modificación</label>
-                        <input type="text" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2" 
+                        <input type="text" class="form-control bg-dark text-light border-secondary border-opacity-25 rounded-3 px-3 py-2"
                                @bind="nuevoPlano.AutorizacionModificacion"
                                placeholder="Detalles de ingeniería o cambios autorizados" />
                     </div>
@@ -91,12 +91,12 @@
                         <a href="planos" class="btn btn-outline-secondary rounded-pill px-4">
                             ⬅ Volver al Listado
                         </a>
-                        <button type="button" @onclick="GuardarPlano" class="btn btn-success rounded-pill px-5 shadow-sm fw-semibold text-white">
-                            Guardar Plano y Archivo
+                        <button type="button" @onclick="GuardarPlano" disabled="@guardando" class="btn btn-success rounded-pill px-5 shadow-sm fw-semibold text-white">
+                            @(guardando ? "Guardando..." : "Guardar Plano y Archivo")
                         </button>
                     </div>
                 </div>
-                
+
             </div>
         </div>
     </div>
@@ -107,6 +107,7 @@
     private string? mensajeError;
     private IBrowserFile? archivoSeleccionado;
     private string? nombreArchivo;
+    private bool guardando = false;
 
     private void ManejarSeleccionArchivo(InputFileChangeEventArgs e)
     {
@@ -116,6 +117,9 @@
 
     private async Task GuardarPlano()
     {
+        if (guardando) return;
+        guardando = true;
+
         try
         {
             mensajeError = null;
@@ -128,25 +132,32 @@
 
             if (archivoSeleccionado != null)
             {
-                string webRootPath = HostEnvironmentGetPath();
-                string uploadsFolder = Path.Combine(webRootPath, "uploads", "planos");
+                using var stream = archivoSeleccionado.OpenReadStream(maxAllowedSize: 30 * 1024 * 1024);
+                var contentType = string.IsNullOrWhiteSpace(archivoSeleccionado.ContentType)
+                    ? "application/octet-stream"
+                    : archivoSeleccionado.ContentType;
 
-                if (!Directory.Exists(uploadsFolder))
+                var resultado = await StorageService.SubirArchivoAsync(
+                    stream,
+                    archivoSeleccionado.Name,
+                    contentType,
+                    "planos"
+                );
+
+                if (!resultado.Ok || string.IsNullOrWhiteSpace(resultado.StoragePath))
                 {
-                    Directory.CreateDirectory(uploadsFolder);
+                    mensajeError = $"No se pudo subir el archivo a Supabase Storage: {resultado.Error}";
+                    return;
                 }
 
-                string uniqueFileName = $"{Guid.NewGuid()}_{archivoSeleccionado.Name}";
-                string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await archivoSeleccionado.OpenReadStream(maxAllowedSize: 30 * 1024 * 1024).CopyToAsync(stream);
-                }
-
-                nuevoPlano.RutaArchivo = $"/uploads/planos/{uniqueFileName}";
+                var rutaLimpia = resultado.StoragePath.TrimStart('/');
+                nuevoPlano.RutaArchivo = $"https://hhtfudrlsxhweuhpodkf.supabase.co/storage/v1/object/public/documentos-ductos/{rutaLimpia}";
                 nuevoPlano.FechaSubida = DateTime.UtcNow;
                 nuevoPlano.TamanoBytes = archivoSeleccionado.Size;
+            }
+            else
+            {
+                nuevoPlano.FechaSubida = DateTime.UtcNow;
             }
 
             await PlanoService.GuardarPlanoAsync(nuevoPlano);
@@ -156,10 +167,9 @@
         {
             mensajeError = $"Ocurrió un error al guardar: {ex.Message}";
         }
-    }
-
-    private string HostEnvironmentGetPath()
-    {
-        return WebHostEnvironment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+        finally
+        {
+            guardando = false;
+        }
     }
 }
